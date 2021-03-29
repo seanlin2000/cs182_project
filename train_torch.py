@@ -29,11 +29,11 @@ def basic_train(model, optim, criterion, train_loader, num_epochs):
   for i in range(num_epochs):
         train_total, train_correct = 0,0
         for idx, (inputs, targets) in enumerate(train_loader):
-          with torch.cuda.device(torch.cuda.current_device()):
-            torch.cuda.empty_cache()
+        #   with torch.cuda.device(torch.cuda.current_device()):
+        #     torch.cuda.empty_cache()
           optim.zero_grad()
-          inputs = inputs.to(device)
-          targets = targets.to(device)
+        #   inputs = inputs.to(device)
+        #   targets = targets.to(device)
           outputs = model(inputs)
           loss = criterion(outputs, targets)
           loss.backward()
@@ -77,7 +77,7 @@ def main():
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
     class_names = image_datasets['train'].classes
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Define the model
     model_conv, optimizer_conv = model.init_model(len(class_names))
@@ -87,8 +87,8 @@ def main():
     # Decay LR by a factor of 0.1 every 7 epochs
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
 
-    with torch.cuda.device(torch.cuda.current_device()):
-        torch.cuda.empty_cache()
+    # with torch.cuda.device(torch.cuda.current_device()):
+    #     torch.cuda.empty_cache()
     model_conv = basic_train(model_conv, optimizer_conv, criterion, dataloaders['train'], num_epochs=25)
 
 if __name__ == '__main__':
