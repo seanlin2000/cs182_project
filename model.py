@@ -49,5 +49,5 @@ def init_model(num_classes):
     resnet.fc = nn.Linear(num_ftrs, num_ftrs)
     seanormanet = Net(num_ftrs, num_classes)
     model_conv = nn.Sequential(resnet, seanormanet)
-    optimizer_conv = optim.SGD(seanormanet.parameters(), lr=0.001, momentum=0.9)
+    optimizer_conv = optim.Adam(seanormanet.parameters(), lr=0.001)
     return model_conv, optimizer_conv
