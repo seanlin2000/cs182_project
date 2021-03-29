@@ -1,4 +1,5 @@
 import torch
+import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 import torch.nn.functional as F
@@ -42,10 +43,10 @@ class Net(nn.Module):
 
 def init_model(num_classes):
     resnet = torchvision.models.resnet101(pretrained=True)
-    for param in model_conv.parameters():
+    for param in resnet.parameters():
         param.requires_grad = False
-    num_ftrs = model_conv.fc.in_features
-    model_conv.fc = nn.Linear(num_ftrs, num_ftrs)
+    num_ftrs = resnet.fc.in_features
+    resnet.fc = nn.Linear(num_ftrs, num_ftrs)
     seanormanet = Net(num_ftrs, num_classes)
     model_conv = nn.Sequential(resnet, seanormanet)
     optimizer_conv = optim.SGD(seanormanet.parameters(), lr=0.001, momentum=0.9)
