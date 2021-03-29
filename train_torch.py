@@ -1,0 +1,95 @@
+"""
+This file will train a sample network on the tiny image-net data. It should be
+your final goal to improve on the performance of this model by swapping out large
+portions of the code. We provide this model in order to test the full pipeline,
+and to validate your own code submission.
+"""
+
+from __future__ import print_function, division
+
+# import sys
+# sys.path.append(root_folder)
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.optim import lr_scheduler
+import torch.nn.functional as F
+import numpy as np
+import torchvision
+from torchvision import datasets, models, transforms
+import matplotlib.pyplot as plt
+import time
+import os
+import copy
+import pathlib
+from utils import dictionary
+import model
+
+def basic_train(model, optim, criterion, train_loader, num_epochs):
+  for i in range(num_epochs):
+        train_total, train_correct = 0,0
+        for idx, (inputs, targets) in enumerate(train_loader):
+          with torch.cuda.device(torch.cuda.current_device()):
+            torch.cuda.empty_cache()
+          optim.zero_grad()
+          inputs = inputs.to(device)
+          targets = targets.to(device)
+          outputs = model(inputs)
+          loss = criterion(outputs, targets)
+          loss.backward()
+          optim.step()
+          _, predicted = outputs.max(1)
+          train_total += targets.size(0)
+          train_correct += predicted.eq(targets).sum().item()
+          print("\r", end='')
+          print(f'training {100 * idx / len(train_loader):.2f}%: {train_correct / train_total:.3f}', end='')
+        print()
+        print("Epoch {} completed with overall accuracy at {:.4f}".format(i, train_correct / train_total))
+        torch.save({
+            'net': model.state_dict(),
+        }, 'latest.pt')
+
+def main():
+    dataset_folder = "./tiny-imagenet-200/"
+    data_dir = pathlib.Path(dataset_folder)
+
+    # Data augmentation and normalization for training
+    # Just normalization for validation
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.Resize(256),
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+    }
+
+    # Load the data
+    image_datasets = {x: datasets.ImageFolder(data_dir / x, data_transforms[x]) for x in ['train', 'val']}
+    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=1000, shuffle=True, num_workers=4) for x in ['train', 'val']}
+    dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
+    class_names = image_datasets['train'].classes
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    # Define the model
+    model_conv, optimizer_conv = model.init_model(len(class_names))
+
+    criterion = nn.CrossEntropyLoss()
+
+    # Decay LR by a factor of 0.1 every 7 epochs
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
+
+    with torch.cuda.device(torch.cuda.current_device()):
+        torch.cuda.empty_cache()
+    model_conv = basic_train(model_conv, optimizer_conv, criterion, dataloaders['train'], num_epochs=25)
+
+if __name__ == '__main__':
+    main()
