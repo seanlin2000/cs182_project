@@ -22,7 +22,7 @@ import time
 import os
 import copy
 import pathlib
-from utils import dictionary
+from utils import dictionary, preprocess_val
 import model
 
 def basic_train(model, optim, criterion, train_loader, num_epochs):
