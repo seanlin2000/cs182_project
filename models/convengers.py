@@ -66,7 +66,9 @@ class Inception(object):
     
     inception_layer_dims = [32, 32, 64, 64, 80,192, 192, 256, 288, 288, 768, 768, 768, 768, 768, None, 1280, 2048, 2048, 2048, 2048, 1000]
     
-    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=20):
+    inception_layer_dims_no_aux = [32, 32, 64, 64, 80,192, 192, 256, 288, 288, 768, 768, 768, 768, 768, 1280, 2048, 2048, 2048, 2048, 1000]
+    
+    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=20, use_aux=False):
         '''
         1. Creates InceptionV3 instance cutoff at layer_cutoff
         2. Adds a (1,1) average pool layer at end (like in original ResNet, probably other ways we can do this)
@@ -94,7 +96,7 @@ class Inception(object):
         layer    22: Fully connected layer (in_dim=2048, out_dim=1000)
         '''
         
-        pretrained_inception = torchvision.models.inception_v3(pretrained=True)
+        pretrained_inception = torchvision.models.inception_v3(pretrained=True, aux_logits=use_aux)
         
         for p in pretrained_inception.parameters():
             p.requires_grad = requires_grad
@@ -106,7 +108,11 @@ class Inception(object):
         
         #map output layer to output feature size
         #i.e. layer 5 cutoff corresponds to 256 feature size
-        in_dim = Inception.inception_layer_dims[layer_cutoff-1]
+        
+        if use_aux:
+            in_dim = Inception.inception_layer_dims[layer_cutoff-1]
+        else:
+            in_dim = Inception.inception_layer_dims_no_aux[layer_cutoff-1]
         
         for i in range(num_blocks):
             self.add_block("Block" + str(i), in_dim, hidden_size)
