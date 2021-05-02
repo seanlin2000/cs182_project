@@ -19,7 +19,7 @@ class SeaNormaBlock(nn.Module):
         return x
     
     
-class ResNet(object):
+class ResNet(nn.Module):
     resnet_layer_dims = [64,64,64,64,256,512,1024,2048,2048,1000]
     
     def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=8):
@@ -47,6 +47,7 @@ class ResNet(object):
         Layer 9: (1x1) average pool.
         Layer 10: (2048 in, 1000 out) FC layer
         '''
+        super(ResNet, self).__init__()
         
         pretrained_resnet = torchvision.models.resnet101(pretrained=True)
         
@@ -69,10 +70,11 @@ class ResNet(object):
         self.model.add_module("FC", nn.Linear(in_dim, num_classes))
     
     def forward(self, x):
-        x = self.model.forward(x)
+        x = self.model(x)
         return x
+   
         
-class Inception(object):
+class Inception(nn.Module):
     
     inception_layer_dims = [32, 32, 64, 64, 80,192, 192, 256, 288, 288, 768, 768, 768, 768, 768, None, 1280, 2048, 2048, 2048, 2048, 1000]
     
@@ -105,6 +107,8 @@ class Inception(object):
         layer    21: Dropout layer
         layer    22: Fully connected layer (in_dim=2048, out_dim=1000)
         '''
+        
+        super(Inception, self).__init__()
         
         pretrained_inception = torchvision.models.inception_v3(pretrained=True, aux_logits=use_aux)
         
