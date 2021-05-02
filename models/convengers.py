@@ -3,6 +3,22 @@ import torch.nn as nn
 import torchvision
 from collections import OrderedDict
 
+class SeaNormaBlock(nn.Module):
+    def __init__(self, input_size, num_classes,dropout=0.5):
+        super(SeaNormaBlock, self).__init__()
+        self.fc = nn.Linear(input_size, input_size)
+        self.bn = nn.BatchNorm1d(input_size)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=dropout)
+        
+    def forward(self, x):
+        x = self.fc(x)
+        x = self.bn(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+        return x
+    
+    
 class ResNet(object):
     resnet_layer_dims = [64,64,64,64,256,512,1024,2048,2048,1000]
     
@@ -47,21 +63,15 @@ class ResNet(object):
         in_dim = ResNet.resnet_layer_dims[layer_cutoff-1]
         
         for i in range(num_blocks):
-            self.add_block("Block" + str(i), in_dim, hidden_size)
+            self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
             in_dim = hidden_size
             
         self.model.add_module("FC", nn.Linear(in_dim, num_classes))
-
-    def add_block(self, name, in_dim, out_dim, dropout=0.5):
-        block = nn.Sequential(OrderedDict([
-          ('fc1', nn.Linear(in_dim,out_dim)),
-          ('bn1', nn.BatchNorm1d(out_dim)),
-          ('relu', nn.ReLU()),
-          ('dropout', nn.Dropout(p=dropout))
-        ]))
+    
+    def forward(self, x):
+        x = self.model.forward(x)
+        return x
         
-        self.model.add_module(name, block)
-
 class Inception(object):
     
     inception_layer_dims = [32, 32, 64, 64, 80,192, 192, 256, 288, 288, 768, 768, 768, 768, 768, None, 1280, 2048, 2048, 2048, 2048, 1000]
@@ -115,17 +125,14 @@ class Inception(object):
             in_dim = Inception.inception_layer_dims_no_aux[layer_cutoff-1]
         
         for i in range(num_blocks):
-            self.add_block("Block" + str(i), in_dim, hidden_size)
+            self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
             in_dim = hidden_size
             
         self.model.add_module("FC", nn.Linear(in_dim, num_classes))
-        
-    def add_block(self, name, in_dim, out_dim, dropout=0.5):
-        block = nn.Sequential(OrderedDict([
-          ('fc1', nn.Linear(in_dim,out_dim)),
-          ('bn1', nn.BatchNorm1d(out_dim)),
-          ('relu', nn.ReLU()),
-          ('dropout', nn.Dropout(p=dropout))
-        ]))
 
-        self.model.add_module(name, block)
+    def forward(self, x):
+        x = self.model.forward(x)
+        return x
+    
+    
+    
