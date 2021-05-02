@@ -4,14 +4,15 @@ import torchvision
 from collections import OrderedDict
 
 class SeaNormaBlock(nn.Module):
-    def __init__(self, input_size, num_classes,dropout=0.5):
+    def __init__(self, input_size, out_size, dropout=0.5):
         super(SeaNormaBlock, self).__init__()
-        self.fc = nn.Linear(input_size, input_size)
+        self.fc = nn.Linear(input_size, out_size)
         self.bn = nn.BatchNorm1d(input_size)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=dropout)
         
     def forward(self, x):
+        x = torch.squeeze(x)
         x = self.fc(x)
         x = self.bn(x)
         x = self.relu(x)
