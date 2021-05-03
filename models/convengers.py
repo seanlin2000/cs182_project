@@ -73,8 +73,8 @@ class ResNet(nn.Module):
     def forward(self, x):
         x = self.model(x)
         return x
-   
-        
+    
+    
 class Inception(nn.Module):
     
     inception_layer_dims = [32, 32, 64, 64, 80,192, 192, 256, 288, 288, 768, 768, 768, 768, 768, None, 1280, 2048, 2048, 2048, 2048, 1000]
