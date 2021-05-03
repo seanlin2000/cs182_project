@@ -16,7 +16,7 @@ class NickFury(object):
         self.dataLoader["val"] = dataloaders["val"]
         self.dataSize["val"] = datasizes["val"]
     
-    def train(self, optimizer, criterion, lr_scheduler, num_epochs=10):
+    def train(self, optimizer, criterion, lr_scheduler, num_epochs=25):
         
         trainLoader = self.dataLoader["train"]
         
