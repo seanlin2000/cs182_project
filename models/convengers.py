@@ -20,7 +20,7 @@ class SeaNormaBlock(nn.Module):
         return x
     
     
-class ResNet(nn.Module):
+class Thor(nn.Module):
     resnet_layer_dims = [64,64,64,64,256,512,1024,2048,2048,1000]
     
     def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=8):
@@ -48,7 +48,7 @@ class ResNet(nn.Module):
         Layer 9: (1x1) average pool.
         Layer 10: (2048 in, 1000 out) FC layer
         '''
-        super(ResNet, self).__init__()
+        super(Thor, self).__init__()
         
         pretrained_resnet = torchvision.models.resnet101(pretrained=True)
         
@@ -62,7 +62,7 @@ class ResNet(nn.Module):
         
         #map output layer to output feature size
         #i.e. layer 5 cutoff corresponds to 256 feature size
-        in_dim = ResNet.resnet_layer_dims[layer_cutoff-1]
+        in_dim = Thor.resnet_layer_dims[layer_cutoff-1]
         
         for i in range(num_blocks):
             self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
@@ -75,7 +75,7 @@ class ResNet(nn.Module):
         return x
     
     
-class Inception(nn.Module):
+class IronMan(nn.Module):
     
     inception_layer_dims = [32, 32, 64, 64, 80,192, 192, 256, 288, 288, 768, 768, 768, 768, 768, None, 1280, 2048, 2048, 2048, 2048, 1000]
     
@@ -109,7 +109,7 @@ class Inception(nn.Module):
         layer    22: Fully connected layer (in_dim=2048, out_dim=1000)
         '''
         
-        super(Inception, self).__init__()
+        super(IronMan, self).__init__()
         
         pretrained_inception = torchvision.models.inception_v3(pretrained=True, aux_logits=use_aux)
         
@@ -125,9 +125,9 @@ class Inception(nn.Module):
         #i.e. layer 5 cutoff corresponds to 256 feature size
         
         if use_aux:
-            in_dim = Inception.inception_layer_dims[layer_cutoff-1]
+            in_dim = IronMan.inception_layer_dims[layer_cutoff-1]
         else:
-            in_dim = Inception.inception_layer_dims_no_aux[layer_cutoff-1]
+            in_dim = IronMan.inception_layer_dims_no_aux[layer_cutoff-1]
         
         for i in range(num_blocks):
             self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
