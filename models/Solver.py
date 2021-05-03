@@ -22,6 +22,7 @@ class NickFury(object):
         
         loss_history = []
         for epoch in range(num_epochs):
+            epoch_start_time = time.time()
             print("Epoch {0}:".format(epoch))
             self.model.train() ## put model in training mode
             
@@ -48,7 +49,13 @@ class NickFury(object):
                 train_accuracy = self.accuracy("train")
                 self.model.eval()  #put model in evaluation mode to calculate validation
                 val_accuracy = self.accuracy("val")
+                
+            epoch_end_time = time.time()
+            hours, rem = divmod(epoch_end_time-epoch_start_time, 3600)
+            minutes, seconds = divmod(rem, 60)
             print()
+            print("Epoch {} completed with elapsed time {:0>2}:{:0>2}:{:05.2f}".format(epoch, int(hours),int(minutes),seconds))
+            
             print("Train Loss: {0:0.3f}".format(per_point_loss))
             print("Train Accuracy: {0:.3f}".format(train_accuracy))
             print("Validation Accuracy: {0:.3f}".format(val_accuracy))
