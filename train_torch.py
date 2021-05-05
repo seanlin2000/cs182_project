@@ -68,7 +68,7 @@ def main():
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
     
-    model_loss_history = model_solver.train(resnet_optimizer, resnet_criterion, resnet_exp_lr_scheduler, device)
+    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, device)
     
     return model_test, model_loss_history
 
