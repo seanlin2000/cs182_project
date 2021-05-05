@@ -29,7 +29,7 @@ from models.solver import NickFury
 import model
 
 def main():
-    dataset_folder = "../tiny-imagenet-200/"
+    dataset_folder = "./data/tiny-imagenet-200/"
     data_dir = pathlib.Path(dataset_folder)
 
     # Data augmentation and normalization for training
