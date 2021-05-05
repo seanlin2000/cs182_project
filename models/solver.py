@@ -16,38 +16,6 @@ class NickFury(object):
         self.dataLoader["val"] = dataloaders["val"]
         self.dataSize["val"] = datasizes["val"]
 
-    def basic_train(self, model, optim, criterion, num_epochs=25):
-        start_time = time.time()
-        train_loader = self.dataLoader['train']
-        for i in range(num_epochs):
-            epoch_start_time = time.time()
-            train_total, train_correct = 0,0
-            for idx, (inputs, targets) in enumerate(train_loader):
-                optim.zero_grad()
-                inputs = inputs.to(self.device)
-                targets = targets.to(self.device)
-                outputs = model(inputs)
-                loss = criterion(outputs, targets)
-                loss.backward()
-                optim.step()
-                _, predicted = outputs.max(1)
-                train_total += targets.size(0)
-                train_correct += predicted.eq(targets).sum().item()
-                print("\r", end='')
-                print(f'training {100 * idx / len(train_loader):.2f}%: {train_correct / train_total:.3f}', end='')
-            epoch_end_time = time.time()
-            hours, rem = divmod(epoch_end_time-epoch_start_time, 3600)
-            minutes, seconds = divmod(rem, 60)
-            print()
-            print("Epoch {} completed with overall accuracy at {:.4f}".format(i, train_correct / train_total))
-            print("Epoch {} completed with elapsed time {:0>2}:{:0>2}:{:05.2f}".format(i, int(hours),int(minutes),seconds))
-            torch.save({
-                'overnight': model.state_dict(),
-            }, 'latest.pt')
-        end_time = time.time()
-        hours, rem = divmod(end_time-start_time, 3600)
-        minutes, seconds = divmod(rem, 60)
-        print("Training completed with total elapsed time: {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
     
     def train(self, optimizer, criterion, lr_scheduler, num_epochs=25):
         
@@ -81,12 +49,8 @@ class NickFury(object):
                 print("\r",end='')
                 #print("Num points is ", num_points, " num hits is ", num_hits)
                 print("Training {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
-            
-            with torch.no_grad():
-                per_point_loss = running_loss/self.dataSize["train"]
-                train_accuracy = self.accuracy("train")
-                self.model.eval()  #put model in evaluation mode to calculate validation
-                val_accuracy = self.accuracy("val")
+
+            per_point_loss = running_loss / self.dataSize["train"]
                 
             epoch_end_time = time.time()
             hours, rem = divmod(epoch_end_time-epoch_start_time, 3600)
@@ -94,14 +58,18 @@ class NickFury(object):
             print()
             print("Epoch {} completed with elapsed time {:0>2}:{:0>2}:{:05.2f}".format(epoch, int(hours),int(minutes),seconds))
             
-            print("Train Loss: {0:0.3f}".format(per_point_loss))
-            print("Train Accuracy: {0:.3f}".format(train_accuracy))
-            print("Validation Accuracy: {0:.3f}".format(val_accuracy))
-                                                
-            loss_history.append(per_point_loss)
+            # print("Train Loss: {0:0.3f}".format(per_point_loss))
+            # print("Train Accuracy: {0:.3f}".format(train_accuracy))
+            if epoch % 5 == 0:
+                with torch.no_grad():
+                    # per_point_loss = running_loss/self.dataSize["train"]
+                    # train_accuracy = self.accuracy("train")
+                    self.model.eval()  #put model in evaluation mode to calculate validation
+                    val_accuracy = self.accuracy("val")
+                    print("Validation Accuracy: {0:.3f}".format(val_accuracy))
                                                 
         torch.save({
-            'net': model.state_dict(),
+            'overnight': model.state_dict(),
         }, 'latest.pt')
         
         return loss_history
