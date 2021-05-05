@@ -22,14 +22,14 @@ import time
 import os
 import copy
 import pathlib
-from utils import dictionary, preprocess_val
+# from utils import dictionary, preprocess_val
 
-from models.convengers import Thor
+from models.convengers import Thor, OGNet, init_model
 from models.solver import NickFury
 import model
 
 def main():
-    dataset_folder = "../tiny-imagenet-200/"
+    dataset_folder = "./data/tiny-imagenet-200/"
     data_dir = pathlib.Path(dataset_folder)
 
     # Data augmentation and normalization for training
@@ -59,18 +59,19 @@ def main():
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    model_test = Thor(requires_grad=True)
+    model_test, model_optimizer = init_model(len(class_names))
+    print(device)
     model_test = model_test.to(device)
     model_solver = NickFury(model_test, dataloaders, dataset_sizes)
     
     model_criterion = nn.CrossEntropyLoss()
-    model_optimizer = optim.Adam(model_test.parameters(), lr=0.001)
+    # model_optimizer = optim.Adam(model_test.parameters(), lr=0.001)
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
     
-    model_loss_history = model_solver.train(resnet_optimizer, resnet_criterion, resnet_exp_lr_scheduler, device)
+    model_loss_history = model_solver.basic_train(model_test, model_optimizer, model_criterion, device)
     
-    return model_test, model_loss_history
+    return model_test
 
 
 if __name__ == '__main__':

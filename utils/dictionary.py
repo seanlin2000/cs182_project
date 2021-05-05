@@ -1,13 +1,13 @@
 import numpy as np
 
 IDX_TO_CLASS = []
-with open("data/tiny-imagenet-200/wnids.txt") as f:
+with open("./data/tiny-imagenet-200/wnids.txt") as f:
     for line in f:
         IDX_TO_CLASS.append(line.strip())
 f.close()
 
 CLASS_TO_LABEL = {}
-with open("data/tiny-imagenet-200/words.txt") as f:
+with open("./data/tiny-imagenet-200/words.txt") as f:
     for line in f:
         (key, val) = line.split('\t')
         val = val.strip()
