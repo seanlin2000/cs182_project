@@ -15,6 +15,39 @@ class NickFury(object):
         self.dataSize["train"] = datasizes["train"]
         self.dataLoader["val"] = dataloaders["val"]
         self.dataSize["val"] = datasizes["val"]
+
+    def basic_train(self, model, optim, criterion, device, num_epochs=25):
+        start_time = time.time()
+        train_loader = self.dataLoader['train']
+        for i in range(num_epochs):
+            epoch_start_time = time.time()
+            train_total, train_correct = 0,0
+            for idx, (inputs, targets) in enumerate(train_loader):
+                optim.zero_grad()
+                inputs = inputs.to(device)
+                targets = targets.to(device)
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
+                loss.backward()
+                optim.step()
+                _, predicted = outputs.max(1)
+                train_total += targets.size(0)
+                train_correct += predicted.eq(targets).sum().item()
+                print("\r", end='')
+                print(f'training {100 * idx / len(train_loader):.2f}%: {train_correct / train_total:.3f}', end='')
+            epoch_end_time = time.time()
+            hours, rem = divmod(epoch_end_time-epoch_start_time, 3600)
+            minutes, seconds = divmod(rem, 60)
+            print()
+            print("Epoch {} completed with overall accuracy at {:.4f}".format(i, train_correct / train_total))
+            print("Epoch {} completed with elapsed time {:0>2}:{:0>2}:{:05.2f}".format(i, int(hours),int(minutes),seconds))
+            torch.save({
+                'net': model.state_dict(),
+            }, 'latest.pt')
+        end_time = time.time()
+        hours, rem = divmod(end_time-start_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        print("Training completed with total elapsed time: {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
     
     def train(self, optimizer, criterion, lr_scheduler, device, num_epochs=25):
         
