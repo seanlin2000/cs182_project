@@ -43,7 +43,7 @@ class NickFury(object):
                 
                 running_loss += loss.item()
                 num_points += len(labels)
-                num_hits += torch.sum(labels == torch.argmax(scores, dim=1))
+                num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
                 
                 print("\r",end='')
                 print("Num points is ", num_points, " num hits is ", num_hits)
