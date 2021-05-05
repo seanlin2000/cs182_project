@@ -59,7 +59,7 @@ def main():
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    model_test, model_optimizer = init_model()
+    model_test, model_optimizer = init_model(len(class_names))
     print(device)
     model_test = model_test.to(device)
     model_solver = NickFury(model_test, dataloaders, dataset_sizes)

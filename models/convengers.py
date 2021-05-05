@@ -38,7 +38,7 @@ class OGNet(nn.Module):
         x = self.layer4(x)
         return x
 
-def init_model(self, num_classes):
+def init_model(num_classes):
     resnet = torchvision.models.resnet101(pretrained=True)
     for param in resnet.parameters():
         param.requires_grad = True
