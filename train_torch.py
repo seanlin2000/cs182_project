@@ -59,12 +59,15 @@ def main():
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
+    """
     resnet = torchvision.models.resnet101(pretrained=True)
     for param in resnet.parameters():
         param.requires_grad = False
     num_ftrs = resnet.fc.in_features
     resnet.fc = nn.Linear(num_ftrs, 200)
+    """
     
+    resnet = Thor(num_blocks=0)
     print(device)
     
     resnet = resnet.to(device)
