@@ -115,8 +115,9 @@ class NickFury(object):
         for images, labels in self.dataLoader[phase]:
             images = images.to(self.device)
             labels = labels.to(self.device)
+            
             scores = self.model(images)
-            top_k_scores, top_k_labels = torch.topk(scores, k)
+            top_k_scores, top_k_indices = torch.topk(scores, k)
             hits = (labels == top_k_indices.T).any(axis=0)
             total_hits += torch.sum(hits)
             
