@@ -60,12 +60,19 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
     model_test = Thor(requires_grad=True)
+    print("I'm fat Thor")
+    print(device)
     model_test = model_test.to(device)
+    print("Penis")
     model_solver = NickFury(model_test, dataloaders, dataset_sizes)
+    print("I'm Nick Fury")
     
     model_criterion = nn.CrossEntropyLoss()
+    print("Hi I'm Lost")
     model_optimizer = optim.Adam(model_test.parameters(), lr=0.001)
+    print("Hi I'm Adam Driver")
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
+    print("And I'm Aashai")
 
     
     model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, device)
