@@ -16,7 +16,7 @@ class NickFury(object):
         self.dataLoader["val"] = dataloaders["val"]
         self.dataSize["val"] = datasizes["val"]
     
-    def train(self, optimizer, criterion, lr_scheduler, num_epochs=25):
+    def train(self, optimizer, criterion, lr_scheduler, device, num_epochs=25):
         
         trainLoader = self.dataLoader["train"]
         
@@ -31,6 +31,10 @@ class NickFury(object):
             num_hits = 0
             ##iterate through one epoch of training data
             for idx, (images, labels) in enumerate(trainLoader):
+                
+                images = images.to(device)
+                labels = labels.to(device)
+                
                 optimizer.zero_grad()
                 scores = self.model(images)
                 loss = criterion(scores, labels)
