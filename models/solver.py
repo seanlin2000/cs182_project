@@ -5,10 +5,10 @@ class NickFury(object):
     """
     NickFury manages all our convengers
     """
-    def __init__(self, model, dataloaders, datasizes):
+    def __init__(self, model, dataloaders, datasizes, device):
         
         self.model = model
-        
+        self.device = device
         self.dataLoader = dict()
         self.dataSize = dict()
         self.dataLoader["train"] = dataloaders["train"]
@@ -16,7 +16,7 @@ class NickFury(object):
         self.dataLoader["val"] = dataloaders["val"]
         self.dataSize["val"] = datasizes["val"]
 
-    def basic_train(self, model, optim, criterion, device, num_epochs=25):
+    def basic_train(self, model, optim, criterion, num_epochs=25):
         start_time = time.time()
         train_loader = self.dataLoader['train']
         for i in range(num_epochs):
@@ -24,8 +24,8 @@ class NickFury(object):
             train_total, train_correct = 0,0
             for idx, (inputs, targets) in enumerate(train_loader):
                 optim.zero_grad()
-                inputs = inputs.to(device)
-                targets = targets.to(device)
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
                 loss.backward()
@@ -49,7 +49,7 @@ class NickFury(object):
         minutes, seconds = divmod(rem, 60)
         print("Training completed with total elapsed time: {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
     
-    def train(self, optimizer, criterion, lr_scheduler, device, num_epochs=25):
+    def train(self, optimizer, criterion, lr_scheduler, num_epochs=25):
         
         trainLoader = self.dataLoader["train"]
         
@@ -65,8 +65,8 @@ class NickFury(object):
             ##iterate through one epoch of training data
             for idx, (images, labels) in enumerate(trainLoader):
                 
-                images = images.to(device)
-                labels = labels.to(device)
+                images = images.to(self.device)
+                labels = labels.to(self.device)
                 
                 optimizer.zero_grad()
                 scores = self.model(images)
@@ -113,8 +113,8 @@ class NickFury(object):
         
         total_hits = 0
         for images, labels in self.dataLoader[phase]:
-            images = images.to(device)
-            labels = labels.to(device)
+            images = images.to(self.device)
+            labels = labels.to(self.device)
             scores = self.model(images)
             top_k_scores, top_k_labels = torch.topk(scores, k)
             hits = (labels == top_k_indices.T).any(axis=0)

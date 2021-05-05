@@ -24,7 +24,7 @@ import copy
 import pathlib
 # from utils import dictionary, preprocess_val
 
-from models.convengers import Thor, OGNet, init_model
+from models.convengers import Thor, OGNet, init_model, IronMan, Convengers_Cat
 from models.solver import NickFury
 import model
 
@@ -53,7 +53,7 @@ def main():
     # Load the data
     image_datasets = {x: datasets.ImageFolder(data_dir / x, data_transforms[x]) for x in ['train', 'val']}
     # Set num_workers=2 when we use CPU, 4 when we use GPU, batch size needs to be smaller for weaker CPUs
-    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=50, shuffle=True, num_workers=4,pin_memory=True) for x in ['train', 'val']}
+    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=10, shuffle=True, num_workers=0,pin_memory=True) for x in ['train', 'val']}
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
     class_names = image_datasets['train'].classes
     
@@ -67,18 +67,17 @@ def main():
     resnet.fc = nn.Linear(num_ftrs, 200)
     '''
     
-    resnet = Thor(num_blocks=1, requires_grad=False)
+    model_test = Convengers_Cat(num_blocks=1, requires_grad=False)
     print(device)
     
-    resnet = resnet.to(device)
-    model_solver = NickFury(resnet, dataloaders, dataset_sizes)
+    model_test = model_test.to(device)
+    model_solver = NickFury(model_test, dataloaders, dataset_sizes, device)
     
     model_criterion = nn.CrossEntropyLoss()
-    model_optimizer = optim.Adam(resnet.parameters(), lr=0.001)
+    model_optimizer = optim.Adam(model_test.parameters(), lr=0.001)
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
-    
-    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, device)
+    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler)
     
     return model_test
 

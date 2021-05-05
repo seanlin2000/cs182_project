@@ -59,11 +59,15 @@ class SeaNormaBlock(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
         
     def forward(self, x):
-        x = torch.squeeze(x)
         x = self.fc(x)
         x = self.bn(x)
         x = self.relu(x)
         x = self.dropout(x)
+        return x
+
+class SqueezeLayer(nn.Module):
+    def forward(self, x):
+        x = torch.squeeze(x)
         return x
     
 class Thor(nn.Module):
@@ -105,7 +109,7 @@ class Thor(nn.Module):
         
         self.model = nn.Sequential(*modules)
         self.model.add_module("Average Pool", nn.AdaptiveAvgPool2d((1,1)))
-        
+        self.model.add_module("Squeeze", SqueezeLayer())
         #map output layer to output feature size
         #i.e. layer 5 cutoff corresponds to 256 feature size
         in_dim = Thor.resnet_layer_dims[layer_cutoff-1]
@@ -116,13 +120,11 @@ class Thor(nn.Module):
                 self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
                 in_dim = hidden_size
             
-            self.logits = nn.Linear(in_dim, num_classes)
+            self.model.add_module("Logits", nn.Linear(in_dim, num_classes))
             self.out_dim = num_classes
     
     def forward(self, x):
-        x = self.model(x)
-        x = x.squeeze()
-        x = self.logits(x)
+        x = self.model.forward(x)
         return x
     
     def get_out_dim(self):
@@ -174,7 +176,7 @@ class IronMan(nn.Module):
         
         self.model = nn.Sequential(*modules)
         self.model.add_module("Average Pool", nn.AdaptiveAvgPool2d((1,1)))
-        
+        self.model.add_module("Squeeze", SqueezeLayer())
         #map output layer to output feature size
         #i.e. layer 5 cutoff corresponds to 256 feature size
         
@@ -190,7 +192,7 @@ class IronMan(nn.Module):
                 self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
                 in_dim = hidden_size
 
-            self.model.add_module("FC", nn.Linear(in_dim, num_classes))
+            self.model.add_module("Logits", nn.Linear(in_dim, num_classes))
             self.out_dim = num_classes
         
     def forward(self, x):
