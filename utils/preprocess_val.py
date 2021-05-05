@@ -6,7 +6,7 @@ from os.path import join
 from os import listdir, rmdir
 
 def preprocess_val():
-  target_folder = 'tiny-imagenet-200/val/'
+  target_folder = '../tiny-imagenet-200/val/'
   #test_folder   = 'tiny-imagenet-200/test/'
 
   #os.mkdir(test_folder)
@@ -31,6 +31,6 @@ def preprocess_val():
       dest = target_folder + str(folder) + '/images/' + str(file)
       move(path, dest)
       
-  rmdir('./tiny-imagenet-200/val/images')
+  rmdir('../tiny-imagenet-200/val/images')
 
 preprocess_val()
