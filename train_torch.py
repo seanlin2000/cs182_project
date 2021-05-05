@@ -67,7 +67,7 @@ def main():
     resnet.fc = nn.Linear(num_ftrs, 200)
     '''
     
-    model_test = Convengers_Cat(num_blocks=1, requires_grad=False)
+    model_test = Convengers_Cat(num_blocks=1, requires_grad=True)
     print(device)
     
     model_test = model_test.to(device)

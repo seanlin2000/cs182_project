@@ -42,7 +42,7 @@ class NickFury(object):
             print("Epoch {} completed with overall accuracy at {:.4f}".format(i, train_correct / train_total))
             print("Epoch {} completed with elapsed time {:0>2}:{:0>2}:{:05.2f}".format(i, int(hours),int(minutes),seconds))
             torch.save({
-                'net': model.state_dict(),
+                'overnight': model.state_dict(),
             }, 'latest.pt')
         end_time = time.time()
         hours, rem = divmod(end_time-start_time, 3600)
