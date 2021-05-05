@@ -115,12 +115,14 @@ class Thor(nn.Module):
             for i in range(num_blocks):
                 self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
                 in_dim = hidden_size
-
-            self.model.add_module("FC", nn.Linear(in_dim, num_classes))
+            
+            self.logits = nn.Linear(in_dim, num_classes)
             self.out_dim = num_classes
     
     def forward(self, x):
         x = self.model(x)
+        x = x.squeeze()
+        x = self.logits(x)
         return x
     
     def get_out_dim(self):

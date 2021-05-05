@@ -53,19 +53,19 @@ def main():
     # Load the data
     image_datasets = {x: datasets.ImageFolder(data_dir / x, data_transforms[x]) for x in ['train', 'val']}
     # Set num_workers=2 when we use CPU, 4 when we use GPU, batch size needs to be smaller for weaker CPUs
-    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=20, shuffle=True, num_workers=2) for x in ['train', 'val']}
+    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=20, shuffle=True, num_workers=0) for x in ['train', 'val']}
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
     class_names = image_datasets['train'].classes
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    """
+    '''
     resnet = torchvision.models.resnet101(pretrained=True)
     for param in resnet.parameters():
         param.requires_grad = False
     num_ftrs = resnet.fc.in_features
     resnet.fc = nn.Linear(num_ftrs, 200)
-    """
+    '''
     
     resnet = Thor(num_blocks=0)
     print(device)
@@ -78,7 +78,7 @@ def main():
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
     
-    model_loss_history = model_solver.basic_train(resnet, model_optimizer, model_criterion, device)
+    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, device)
     
     return model_test
 
