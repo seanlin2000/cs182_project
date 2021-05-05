@@ -59,13 +59,19 @@ def main():
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    model_test, model_optimizer = init_model(len(class_names))
+    resnet = torchvision.models.resnet101(pretrained=True)
+    for param in resnet.parameters():
+        param.requires_grad = False
+    num_ftrs = resnet.fc.in_features
+    resnet.fc = nn.Linear(num_ftrs, 200)
+    
     print(device)
-    model_test = model_test.to(device)
-    model_solver = NickFury(model_test, dataloaders, dataset_sizes)
+    
+    resnet = resnet.to(device)
+    model_solver = NickFury(resnet, dataloaders, dataset_sizes)
     
     model_criterion = nn.CrossEntropyLoss()
-    # model_optimizer = optim.Adam(model_test.parameters(), lr=0.001)
+    model_optimizer = optim.Adam(resnet.parameters(), lr=0.001)
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
     
