@@ -46,6 +46,7 @@ class NickFury(object):
                 num_hits += torch.sum(labels == torch.argmax(scores, dim=1))
                 
                 print("\r",end='')
+                print("Num points is ", num_points, " num hits is ", num_hits)
                 print("Training {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
             
             with torch.no_grad():
@@ -79,6 +80,8 @@ class NickFury(object):
         
         total_hits = 0
         for images, labels in self.dataLoader[phase]:
+            images = images.to(device)
+            labels = labels.to(device)
             scores = self.model(images)
             top_k_scores, top_k_labels = torch.topk(scores, k)
             hits = (labels == top_k_indices.T).any(axis=0)
