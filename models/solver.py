@@ -73,7 +73,7 @@ class NickFury(object):
         return loss_history
     
     def accuracy(self, phase):
-        return self.top_k_accuracy(self, 1, phase)
+        return self.top_k_accuracy(1, phase)
         
     def top_k_accuracy(self, k, phase):
         
