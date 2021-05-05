@@ -47,7 +47,7 @@ def init_model(num_classes):
     resnet.fc = nn.Linear(num_ftrs, num_ftrs)
     seanormanet = OGNet(num_ftrs, num_classes)
     model_conv = nn.Sequential(resnet, seanormanet)
-    optimizer_conv = optim.Adam(lr=0.001)
+    optimizer_conv = optim.Adam(model_conv.parameters(), lr=0.001)
     return model_conv, optimizer_conv
 
 class SeaNormaBlock(nn.Module):
