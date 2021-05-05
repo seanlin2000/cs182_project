@@ -7,7 +7,7 @@ class SeaNormaBlock(nn.Module):
     def __init__(self, input_size, out_size, dropout=0.5):
         super(SeaNormaBlock, self).__init__()
         self.fc = nn.Linear(input_size, out_size)
-        self.bn = nn.BatchNorm1d(input_size)
+        self.bn = nn.BatchNorm1d(out_size)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=dropout)
         
@@ -19,11 +19,10 @@ class SeaNormaBlock(nn.Module):
         x = self.dropout(x)
         return x
     
-    
 class Thor(nn.Module):
     resnet_layer_dims = [64,64,64,64,256,512,1024,2048,2048,1000]
     
-    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=8):
+    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=8,extract_features=False):
         '''
         1. Creates Resnet101 instance cutoff at layer_cutoff (exclusive)
         2. Adds a (1,1) average pool layer at end (like in original ResNet, probably other ways we can do this)
@@ -48,7 +47,7 @@ class Thor(nn.Module):
         Layer 9: (1x1) average pool.
         Layer 10: (2048 in, 1000 out) FC layer
         '''
-        super(Thor, self).__init__()
+        super().__init__()
         
         pretrained_resnet = torchvision.models.resnet101(pretrained=True)
         
@@ -63,16 +62,22 @@ class Thor(nn.Module):
         #map output layer to output feature size
         #i.e. layer 5 cutoff corresponds to 256 feature size
         in_dim = Thor.resnet_layer_dims[layer_cutoff-1]
+        self.out_dim = in_dim
         
-        for i in range(num_blocks):
-            self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
-            in_dim = hidden_size
-            
-        self.model.add_module("FC", nn.Linear(in_dim, num_classes))
+        if extract_features == False:
+            for i in range(num_blocks):
+                self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
+                in_dim = hidden_size
+
+            self.model.add_module("FC", nn.Linear(in_dim, num_classes))
+            self.out_dim = num_classes
     
     def forward(self, x):
         x = self.model(x)
         return x
+    
+    def get_out_dim(self):
+        return self.out_dim
     
     
 class IronMan(nn.Module):
@@ -81,7 +86,7 @@ class IronMan(nn.Module):
     
     inception_layer_dims_no_aux = [32, 32, 64, 64, 80,192, 192, 256, 288, 288, 768, 768, 768, 768, 768, 1280, 2048, 2048, 2048, 2048, 1000]
     
-    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=20, use_aux=False):
+    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=20, use_aux=False, extract_features=False):
         '''
         1. Creates InceptionV3 instance cutoff at layer_cutoff
         2. Adds a (1,1) average pool layer at end (like in original ResNet, probably other ways we can do this)
@@ -109,7 +114,7 @@ class IronMan(nn.Module):
         layer    22: Fully connected layer (in_dim=2048, out_dim=1000)
         '''
         
-        super(IronMan, self).__init__()
+        super().__init__()
         
         pretrained_inception = torchvision.models.inception_v3(pretrained=True, aux_logits=use_aux)
         
@@ -129,15 +134,46 @@ class IronMan(nn.Module):
         else:
             in_dim = IronMan.inception_layer_dims_no_aux[layer_cutoff-1]
         
-        for i in range(num_blocks):
-            self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
-            in_dim = hidden_size
-            
-        self.model.add_module("FC", nn.Linear(in_dim, num_classes))
+        self.out_dim = in_dim
+        
+        if extract_features == False:
+            for i in range(num_blocks):
+                self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
+                in_dim = hidden_size
 
+            self.model.add_module("FC", nn.Linear(in_dim, num_classes))
+            self.out_dim = num_classes
+        
     def forward(self, x):
         x = self.model.forward(x)
         return x
     
+    def get_out_dim(self):
+        return self.out_dim
+
+class Convengers_Cat(nn.Module):
+    ## concatenate then FCC
+    
+    def __init__(self, num_classes=200, num_blocks=1, hidden_size = 2048, requires_grad=False):
+        super().__init__()
+        
+        self.thor = Thor(extract_features=True, requires_grad=requires_grad)
+        self.ironman = IronMan(extract_features=True, requires_grad=requires_grad)
+        self.teamup = nn.Sequential()
+        
+        in_dim = self.thor.get_out_dim() + self.ironman.get_out_dim()
+        
+        for i in range(num_blocks):
+            self.teamup.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
+            in_dim = hidden_size
+            
+        self.teamup.add_module("FC", nn.Linear(in_dim, num_classes))
+        
+    def forward(self, x):
+        thor_out = self.thor.forward(x)
+        ironman_out = self.ironman.forward(x)
+        concat_out = torch.cat((thor_out, ironman_out),dim=1)
+        out = self.teamup.forward(concat_out)
+        return out
     
     
