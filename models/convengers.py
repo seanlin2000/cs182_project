@@ -44,7 +44,7 @@ def init_model(self, num_classes):
         param.requires_grad = True
     num_ftrs = resnet.fc.in_features
     resnet.fc = nn.Linear(num_ftrs, num_ftrs)
-    seanormanet = Net(num_ftrs, num_classes)
+    seanormanet = OGNet(num_ftrs, num_classes)
     model_conv = nn.Sequential(resnet, seanormanet)
     optimizer_conv = optim.Adam(lr=0.001)
     return model_conv, optimizer_conv
