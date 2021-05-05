@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 class OGNet(nn.Module):
     def __init__(self, input_size, num_classes):
-        super(Net, self).__init__()
+        super(OGNet, self).__init__()
         self.layer1a = nn.Linear(input_size, input_size)
         self.layer1b = nn.BatchNorm1d(input_size)
         self.layer1c = nn.ReLU()
