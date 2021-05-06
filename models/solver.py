@@ -69,7 +69,7 @@ class NickFury(object):
                     print("Validation Accuracy: {0:.3f}".format(val_accuracy))
                                                 
         torch.save({
-            'overnight': model.state_dict(),
+            'overnight': self.model.state_dict(),
         }, 'latest.pt')
         
         return loss_history

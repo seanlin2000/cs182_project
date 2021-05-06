@@ -24,7 +24,7 @@ import copy
 import pathlib
 # from utils import dictionary, preprocess_val
 
-from models.convengers import Thor, OGNet, init_model, IronMan, Convengers_Cat
+from models.convengers import Thor, IronMan, CaptainAmerica, ConvengersCat
 from models.solver import NickFury
 import model
 
@@ -53,7 +53,7 @@ def main():
     # Load the data
     image_datasets = {x: datasets.ImageFolder(data_dir / x, data_transforms[x]) for x in ['train', 'val']}
     # Set num_workers=2 when we use CPU, 4 when we use GPU, batch size needs to be smaller for weaker CPUs
-    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=10, shuffle=True, num_workers=0,pin_memory=True) for x in ['train', 'val']}
+    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=10, shuffle=True, num_workers=0,pin_memory=False) for x in ['train', 'val']}
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
     class_names = image_datasets['train'].classes
     
@@ -67,7 +67,7 @@ def main():
     resnet.fc = nn.Linear(num_ftrs, 200)
     '''
     
-    model_test = Thor(num_blocks=1, requires_grad=True)
+    model_test = CaptainAmerica(num_blocks=1, requires_grad=True)
     print(device)
     
     model_test = model_test.to(device)
