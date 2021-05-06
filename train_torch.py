@@ -67,17 +67,22 @@ def main():
     resnet.fc = nn.Linear(num_ftrs, 200)
     '''
     
-    model_test = ConvengersCat(num_blocks=1, requires_grad=False)
+    model_test = Thor(num_blocks=1, requires_grad=False)
     print(device)
     
     model_test = model_test.to(device)
     model_solver = NickFury(model_test, dataloaders, dataset_sizes, device)
     
     model_criterion = nn.CrossEntropyLoss()
-    model_optimizer = optim.Adam(model_test.parameters(), lr=0.001)
+    model_optimizer = optim.Adam(model_test.parameters(), lr=0.0001)
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
-    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler)
+    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, num_epochs=3)
+    for p in model_test.parameters():
+        p.requires_grad = True
+    
+    model_optimizer = optim.Adam(model_test.parameters(), lr=0.00001)
+    model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, num_epochs=22)
     
     return model_test
 
