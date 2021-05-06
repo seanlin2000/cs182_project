@@ -22,6 +22,7 @@ class NickFury(object):
         trainLoader = self.dataLoader["train"]
         
         loss_history = []
+        best_val_accuracy = -1
         for epoch in range(num_epochs):
             epoch_start_time = time.time()
             print("Epoch {0}:".format(epoch))
@@ -60,17 +61,22 @@ class NickFury(object):
             
             # print("Train Loss: {0:0.3f}".format(per_point_loss))
             # print("Train Accuracy: {0:.3f}".format(train_accuracy))
-            if epoch % 5 == 0:
-                with torch.no_grad():
-                    # per_point_loss = running_loss/self.dataSize["train"]
-                    # train_accuracy = self.accuracy("train")
-                    self.model.eval()  #put model in evaluation mode to calculate validation
-                    val_accuracy = self.accuracy("val")
-                    print("Validation Accuracy: {0:.3f}".format(val_accuracy))
+            with torch.no_grad():
+                # per_point_loss = running_loss/self.dataSize["train"]
+                # train_accuracy = self.accuracy("train")
+                self.model.eval()  #put model in evaluation mode to calculate validation
+                val_accuracy = self.accuracy("val")
+                print("Validation Accuracy: {0:.3f}".format(val_accuracy))
+                if val_accuracy > best_val_accuracy:
+                    best_val_accuracy = val_accuracy
+                    torch.save({
+                        'overnight': model.state_dict(),
+                    }, 'latest.pt')
+
                                                 
-        torch.save({
-            'overnight': model.state_dict(),
-        }, 'latest.pt')
+        # torch.save({
+        #     'overnight': model.state_dict(),
+        # }, 'latest.pt')
         
         return loss_history
     

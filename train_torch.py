@@ -24,7 +24,7 @@ import copy
 import pathlib
 # from utils import dictionary, preprocess_val
 
-from models.convengers import Thor, OGNet, init_model, IronMan, Convengers_Cat
+from models.convengers import *
 from models.solver import NickFury
 import model
 
