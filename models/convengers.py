@@ -209,9 +209,10 @@ class ConvengersCat(nn.Module):
 
         self.thor = Thor(extract_features=True, requires_grad=requires_grad)
         self.ironman = IronMan(extract_features=True, requires_grad=requires_grad)
+        self.captainamerica = CaptainAmerica(extract_features=True, requires_grad=requires_grad)
         self.teamup = nn.Sequential()
 
-        in_dim = self.thor.get_out_dim() + self.ironman.get_out_dim()
+        in_dim = self.thor.get_out_dim() + self.ironman.get_out_dim() + self.captainamerica.get_out_dim()
 
         for i in range(num_blocks):
             self.teamup.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
@@ -222,6 +223,7 @@ class ConvengersCat(nn.Module):
     def forward(self, x):
         thor_out = self.thor.forward(x)
         ironman_out = self.ironman.forward(x)
-        concat_out = torch.cat((thor_out, ironman_out), dim=1)
+        captainamerica_out = self.captainamerica.forward(x)
+        concat_out = torch.cat((thor_out, ironman_out, captainamerica_out), dim=1)
         out = self.teamup.forward(concat_out)
         return out
