@@ -24,11 +24,7 @@ import copy
 import pathlib
 # from utils import dictionary, preprocess_val
 
-<<<<<<< HEAD
 from models.convengers import *
-=======
-from models.convengers import Thor, IronMan, CaptainAmerica, ConvengersCat
->>>>>>> db6f7fcb9a9ce440f4685388f6bd8b77c0dc40e2
 from models.solver import NickFury
 import model
 
