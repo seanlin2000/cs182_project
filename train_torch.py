@@ -22,46 +22,14 @@ import time
 import os
 import copy
 import pathlib
-from utils import dictionary, preprocess_val
+# from utils import dictionary, preprocess_val
+
+from models.convengers import Thor, OGNet, init_model, IronMan, Convengers_Cat
+from models.solver import NickFury
 import model
 
-def basic_train(model, optim, criterion, train_loader, num_epochs):
-    start_time = time.time()
-    for i in range(num_epochs):
-        epoch_start_time = time.time()
-        train_total, train_correct = 0,0
-        for idx, (inputs, targets) in enumerate(train_loader):
-        #   with torch.cuda.device(torch.cuda.current_device()):
-        #     torch.cuda.empty_cache()
-            optim.zero_grad()
-        #   inputs = inputs.to(device)
-        #   targets = targets.to(device)
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-            loss.backward()
-            optim.step()
-            _, predicted = outputs.max(1)
-            train_total += targets.size(0)
-            train_correct += predicted.eq(targets).sum().item()
-            print("\r", end='')
-            print(f'training {100 * idx / len(train_loader):.2f}%: {train_correct / train_total:.3f}', end='')
-        epoch_end_time = time.time()
-        hours, rem = divmod(epoch_end_time-epoch_start_time, 3600)
-        minutes, seconds = divmod(rem, 60)
-        print()
-        print("Epoch {} completed with overall accuracy at {:.4f}".format(i, train_correct / train_total))
-        print("Epoch {} completed with elapsed time {:0>2}:{:0>2}:{:05.2f}".format(i, int(hours),int(minutes),seconds))
-        torch.save({
-            'net': model.state_dict(),
-        }, 'latest.pt')
-    end_time = time.time()
-    hours, rem = divmod(end_time-start_time, 3600)
-    minutes, seconds = divmod(rem, 60)
-    print("Training completed with total elapsed time: {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
-    
-
 def main():
-    dataset_folder = "../tiny-imagenet-200/"
+    dataset_folder = "./data/tiny-imagenet-200/"
     data_dir = pathlib.Path(dataset_folder)
 
     # Data augmentation and normalization for training
@@ -85,23 +53,34 @@ def main():
     # Load the data
     image_datasets = {x: datasets.ImageFolder(data_dir / x, data_transforms[x]) for x in ['train', 'val']}
     # Set num_workers=2 when we use CPU, 4 when we use GPU, batch size needs to be smaller for weaker CPUs
-    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=20, shuffle=True, num_workers=2) for x in ['train', 'val']}
+    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=10, shuffle=True, num_workers=0,pin_memory=True) for x in ['train', 'val']}
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
     class_names = image_datasets['train'].classes
+    
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
+    '''
+    resnet = torchvision.models.resnet101(pretrained=True)
+    for param in resnet.parameters():
+        param.requires_grad = False
+    num_ftrs = resnet.fc.in_features
+    resnet.fc = nn.Linear(num_ftrs, 200)
+    '''
+    
+    model_test = Thor(num_blocks=1, requires_grad=True)
+    print(device)
+    
+    model_test = model_test.to(device)
+    model_solver = NickFury(model_test, dataloaders, dataset_sizes, device)
+    
+    model_criterion = nn.CrossEntropyLoss()
+    model_optimizer = optim.Adam(model_test.parameters(), lr=0.001)
+    model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler)
+    
+    return model_test
 
-    # Define the model
-    model_conv, optimizer_conv = model.init_model(len(class_names))
-
-    criterion = nn.CrossEntropyLoss()
-
-    # Decay LR by a factor of 0.1 every 7 epochs
-    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
-
-    # with torch.cuda.device(torch.cuda.current_device()):
-    #     torch.cuda.empty_cache()
-    model_conv = basic_train(model_conv, optimizer_conv, criterion, dataloaders['train'], num_epochs=25)
 
 if __name__ == '__main__':
     main()
