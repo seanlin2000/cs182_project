@@ -47,9 +47,9 @@ class NickFury(object):
                 num_points += len(labels)
                 num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
                 
-                print("\r",end='')
+                # print("\r",end='')
                 #print("Num points is ", num_points, " num hits is ", num_hits)
-                print("Training {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
+                print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
 
             per_point_loss = running_loss / self.dataSize["train"]
                 
