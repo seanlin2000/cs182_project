@@ -70,16 +70,16 @@ class NickFury(object):
                 if val_accuracy > best_val_accuracy:
                     best_val_accuracy = val_accuracy
                     torch.save({
-                        'overnight': model.state_dict(),
+                        'overnight': self.model.state_dict(),
                     }, 'latest.pt')
-
-                                                
-        # torch.save({
-        #     'overnight': model.state_dict(),
-        # }, 'latest.pt')
         
         return loss_history
-    
+
+    def save_model(self, name, filename):
+        torch.save({
+            name: self.model.state_dict(),
+        }, filename)
+
     def accuracy(self, phase):
         return self.top_k_accuracy(1, phase)
         
