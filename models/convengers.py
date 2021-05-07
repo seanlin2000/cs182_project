@@ -37,7 +37,7 @@ class CaptainAmerica(nn.Module):
             p.requires_grad = False
 
         feature_layers = list(pretrained_vgg.features.children())
-        pool_layer = list(pretrained_vgg.avgpool.children())
+        pool_layer = [pretrained_vgg.avgpool]
         flatten_layer = [nn.Flatten()]
         classifier_layers = list(pretrained_vgg.classifier.children())
         modules = feature_layers + pool_layer + flatten_layer + classifier_layers
