@@ -42,7 +42,6 @@ class NickFury(object):
                 loss = criterion(scores, labels)
                 loss.backward()
                 optimizer.step()
-                lr_scheduler.step()
                 
                 running_loss += loss.item()
                 num_points += len(labels)
@@ -73,6 +72,8 @@ class NickFury(object):
                     torch.save({
                         'overnight': self.model.state_dict(),
                     }, 'latest.pt')
+                    
+            lr_scheduler.step()
         
         return loss_history
 
