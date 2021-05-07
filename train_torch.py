@@ -77,12 +77,12 @@ def main():
     model_optimizer = optim.Adam(model_test.parameters(), lr=0.0001)
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
-    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, num_epochs=3)
-    for p in model_test.parameters():
-        p.requires_grad = True
+    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, num_epochs=25)
+    # for p in model_test.parameters():
+    #     p.requires_grad = True
     
-    model_optimizer = optim.Adam(model_test.parameters(), lr=0.00001)
-    model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, num_epochs=22)
+    # model_optimizer = optim.Adam(model_test.parameters(), lr=0.00001)
+    # model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, num_epochs=22)
     
     return model_test
 

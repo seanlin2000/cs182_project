@@ -42,6 +42,7 @@ class NickFury(object):
                 loss = criterion(scores, labels)
                 loss.backward()
                 optimizer.step()
+                lr_scheduler.step()
                 
                 running_loss += loss.item()
                 num_points += len(labels)
