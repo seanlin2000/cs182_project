@@ -71,14 +71,14 @@ def main():
     print(device)
     
     model_test = model_test.to(device)
-    model_solver = NickFury(model_test, dataloaders, dataset_sizes, device)
+    model_solver = NickFury("resnet_101", model_test, dataloaders, dataset_sizes, device)
     
     model_criterion = nn.CrossEntropyLoss()
     model_optimizer = optim.Adam(model_test.parameters(), lr=0.00001)
     # model_optimizer = optim.SGD(model_test.parameters(), lr=0.0001, momentum=0.9)
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
-    model_loss_history = model_solver.train("resnet_101", model_optimizer, model_criterion, model_exp_lr_scheduler, num_epochs=25)
+    model_loss_history = model_solver.train(model_optimizer, model_criterion, model_exp_lr_scheduler, num_epochs=25)
     
     return model_test
 
