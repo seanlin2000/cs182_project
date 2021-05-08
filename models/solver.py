@@ -5,8 +5,9 @@ class NickFury(object):
     """
     NickFury manages all our convengers
     """
-    def __init__(self, model, dataloaders, datasizes, device):
+    def __init__(self, model_name, model, dataloaders, datasizes, device):
         
+        self.model_name = model_name
         self.model = model
         self.device = device
         self.dataLoader = dict()
@@ -17,7 +18,7 @@ class NickFury(object):
         self.dataSize["val"] = datasizes["val"]
 
     
-    def train(self, optimizer, criterion, lr_scheduler, num_epochs=25):
+    def train(self, optimizer, criterion, lr_scheduler=None, num_epochs=25):
         
         trainLoader = self.dataLoader["train"]
         
@@ -71,9 +72,10 @@ class NickFury(object):
                     best_val_accuracy = val_accuracy
                     torch.save({
                         'overnight': self.model.state_dict(),
-                    }, 'latest.pt')
+                    }, self.model_name + '.pt')
                     
-            lr_scheduler.step()
+            if lr_scheduler:
+                lr_scheduler.step()
         
         return loss_history
 
