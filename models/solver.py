@@ -16,7 +16,7 @@ class NickFury(object):
         self.dataSize["train"] = datasizes["train"]
         self.dataLoader["val"] = dataloaders["val"]
         self.dataSize["val"] = datasizes["val"]
-
+        self.loss_history = []
     
     def train(self, optimizer, criterion, lr_scheduler=None, num_epochs=25):
         
@@ -53,7 +53,7 @@ class NickFury(object):
                 print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
 
             per_point_loss = running_loss / self.dataSize["train"]
-                
+            loss_history.append(per_point_loss)
             epoch_end_time = time.time()
             hours, rem = divmod(epoch_end_time-epoch_start_time, 3600)
             minutes, seconds = divmod(rem, 60)
@@ -68,6 +68,7 @@ class NickFury(object):
                 self.model.eval()  #put model in evaluation mode to calculate validation
                 val_accuracy = self.accuracy("val")
                 print("Validation Accuracy: {0:.3f}".format(val_accuracy))
+                print("Per Point Loss: {0:.3f}".format(per_point_loss))
                 if val_accuracy > best_val_accuracy:
                     best_val_accuracy = val_accuracy
                     torch.save({
@@ -76,14 +77,22 @@ class NickFury(object):
                     
             if lr_scheduler:
                 lr_scheduler.step()
-        
+                
+        self.loss_history.extend(loss_history)
         return loss_history
-        
+    
     def save_model(self, name, filename):
         torch.save({
             name: self.model.state_dict(),
         }, filename)
-
+    
+    def save_loss_history(self, filename):
+        torch.save(self.loss_history,filename)
+        
+        
+    def get_total_loss_history(self):
+        return self.loss_history
+    
     def accuracy(self, phase):
         return self.top_k_accuracy(1, phase)
         
