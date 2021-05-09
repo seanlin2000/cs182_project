@@ -87,7 +87,7 @@ class NickFury(object):
         }, filename)
     
     def save_loss_history(self, filename):
-        torch.save(self.loss_history,filename)
+        torch.save(self.loss_history_tensor,filename)
         
         
     def get_total_loss_history(self):
