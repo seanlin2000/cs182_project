@@ -204,21 +204,20 @@ class IronMan(nn.Module):
 class ConvengersCat(nn.Module):
     # concatenate then FCC
 
-    def __init__(self, num_classes=200, num_blocks=1, hidden_size=2048, requires_grad=False):
+    def __init__(self, num_classes=200, requires_grad=False):
         super().__init__()
 
         self.thor = Thor(extract_features=True, requires_grad=requires_grad)
         self.ironman = IronMan(extract_features=True, requires_grad=requires_grad)
-        self.captainamerica = CaptainAmerica(extract_features=True, requires_grad=requires_grad)
+        self.captainamerica = CaptainAmerica(extract_features=True, requires_grad=requires_grad, layer_cutoff=-2)
         self.teamup = nn.Sequential()
 
         in_dim = self.thor.get_out_dim() + self.ironman.get_out_dim() + self.captainamerica.get_out_dim()
-
-        for i in range(num_blocks):
-            self.teamup.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
-            in_dim = hidden_size
-
-        self.teamup.add_module("FC", nn.Linear(in_dim, num_classes))
+        
+        self.teamup.add_module("Block1", SeaNormaBlock(in_dim, 4096))
+        self.teamup.add_module("Block2", SeaNormaBlock(4096, 2048))
+        self.teamup.add_module("Block3", SeaNormaBlock(2048, 1024))
+        self.teamup.add_module("FC", nn.Linear(1024, num_classes))
 
     def forward(self, x):
         thor_out = self.thor.forward(x)
@@ -227,3 +226,30 @@ class ConvengersCat(nn.Module):
         concat_out = torch.cat((thor_out, ironman_out, captainamerica_out), dim=1)
         out = self.teamup.forward(concat_out)
         return out
+    
+    def thor_grad(self, requires_grad):
+        for p in self.thor.parameters():
+            p.requires_grad = requires_grad
+    
+    def ironman_grad(self, requires_grad):
+        for p in self.ironman.parameters():
+            p.requires_grad = requires_grad
+            
+    def captainamerica_grad(self, requires_grad):
+        for p in self.ironman.parameters():
+            p.requires_grad = requires_grad
+            
+    def teamup_grad(self, requires_grad):
+        for p in self.teamup.parameters():
+            p.requires_grad = requires_grad
+        
+    def end_to_end_grad(self, requires_grad):
+        # sets all parameters to require grad
+        
+        self.thor_grad(requires_grad)
+        self.ironman_grad(requires_grad)
+        self.captainamerica_grad(requires_grad)
+        self.teamup(requires_grad)
+               
+   
+        

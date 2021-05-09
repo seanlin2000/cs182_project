@@ -78,7 +78,7 @@ class NickFury(object):
                 lr_scheduler.step()
         
         return loss_history
-
+        
     def save_model(self, name, filename):
         torch.save({
             name: self.model.state_dict(),
