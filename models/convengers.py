@@ -249,7 +249,7 @@ class ConvengersCat(nn.Module):
         self.thor_grad(requires_grad)
         self.ironman_grad(requires_grad)
         self.captainamerica_grad(requires_grad)
-        self.teamup(requires_grad)
+        self.teamup_grad(requires_grad)
                
    
         
