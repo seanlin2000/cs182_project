@@ -43,7 +43,7 @@ class NickFury(object):
             num_points = 0
             num_hits = 0
             ##iterate through one epoch of training data
-            for idx, (images, labels) in enumerate(trainLoader):
+            # for idx, (images, labels) in enumerate(trainLoader):
                 
             #     images = images.to(self.device)
             #     labels = labels.to(self.device)
