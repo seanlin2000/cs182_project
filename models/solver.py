@@ -101,8 +101,8 @@ class NickFury(object):
                     torch.save({
                         'overnight': self.model.state_dict(),
                     }, self.model_name + '.pt')
-                if adv_train:
-                    print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
+            if adv_train:
+                print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
                     
             if lr_scheduler:
                 lr_scheduler.step()
@@ -157,11 +157,11 @@ class NickFury(object):
             else:
                 adversary = random.choice(self.fgsm_adversaries)
 
-            with ctx_noparamgrad_and_eval(self.model):
-                adv_images = adversary.perturb(images, labels)
+            adv_images = adversary.perturb(images, labels)
             adv_images = adv_images.to(self.device)
             
-            scores = self.model(adv_images)
+            with torch.no_grad:
+                scores = self.model(adv_images)
             top_k_scores, top_k_indices = torch.topk(scores, k)
             hits = (labels == top_k_indices.T).any(axis=0)
             total_hits += torch.sum(hits)
