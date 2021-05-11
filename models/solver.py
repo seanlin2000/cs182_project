@@ -21,7 +21,9 @@ class NickFury(object):
         self.dataLoader["val"] = dataloaders["val"]
         self.dataSize["val"] = datasizes["val"]
         self.loss_history = []
-        self.adversaries = []
+        self.pgd_adversaries = []
+        self.fgsm_adversaries = []
+        self.accuracy_history = []
     
     def train(self, optimizer, criterion, lr_scheduler=None, num_epochs=25, adv_train=False):
         
@@ -58,7 +60,12 @@ class NickFury(object):
                 
                 # Train on an adversarial minibatch
                 if adv_train:
-                    adversary = random.choice(self.adversaries)
+                    use_pgd = torch.rand(1) < 0.1
+                    if use_pgd:
+                        adversary = random.choice(self.pgd_adversaries)
+                    else:
+                        adversary = random.choice(self.fgsm_adversaries)
+                        
                     with ctx_noparamgrad_and_eval(self.model):
                         adv_images = adversary.perturb(images, labels)
                     adv_images = adv_images.to(self.device)
@@ -84,6 +91,9 @@ class NickFury(object):
             with torch.no_grad():
                 self.model.eval()  #put model in evaluation mode to calculate validation
                 val_accuracy = self.accuracy("val")
+                
+                self.accuracy_history.append(val_accuracy)
+                
                 print("Validation Accuracy: {0:.3f}".format(val_accuracy))
                 if adv_train:
                     print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
@@ -108,9 +118,11 @@ class NickFury(object):
     def save_loss_history(self, filename):
         torch.save(self.loss_history_tensor,filename)
         
-        
     def get_total_loss_history(self):
         return self.loss_history
+    
+    def get_accuracy_history(self):
+        return self.accuracy_history
     
     def accuracy(self, phase):
         return self.top_k_accuracy(1, phase)
@@ -138,7 +150,13 @@ class NickFury(object):
         for images, labels in self.dataLoader[phase]:
             images = images.to(self.device)
             labels = labels.to(self.device)
-            adversary = random.choice(self.adversaries)
+            
+            use_pgd = torch.rand(1) < 0.1
+            if use_pgd:
+                adversary = random.choice(self.pgd_adversaries)
+            else:
+                adversary = random.choice(self.fgsm_adversaries)
+                
             adv_images = adversary.perturb(images, labels)
             adv_images = adv_images.to(self.device)
             
@@ -155,8 +173,8 @@ class NickFury(object):
         for eps in eps_list:
             pgd_adv = LinfPGDAttack(model, criterion, eps=eps)
             fgsm_adv = GradientSignAttack(model, criterion, eps=eps)
-            self.adversaries.append(pgd_adv)
-            self.adversaries.append(fgsm_adv)
+            self.pgd_adversaries.append(pgd_adv)
+            self.fgsm_adversaries.append(fgsm_adv)
             
             
             
