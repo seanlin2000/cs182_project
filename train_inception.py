@@ -82,6 +82,10 @@ def main():
 
     model_loss_history = model_solver.train(model_optimizer, model_criterion, None, num_epochs=25, adv_train=True)
     
+    model_solver.save_loss_history("inception_loss.pt")
+    val = model_solver.get_accuracy_history()
+
+    torch.save(val, "accuracy_history.pt")
     return model_test
 
 

@@ -82,10 +82,10 @@ def main():
 
     model_loss_history = model_solver.train(model_optimizer, model_criterion, None, num_epochs=25, adv_train=True)
     
-    model_solver.save_loss_history("resnet_101_loss_history")
+    model_solver.save_loss_history("resnet_101_loss_history.pt")
     val_history = model_solver.get_accuracy_history()
 
-    torch.save(val_history, "resnet_101_accuracy_history")
+    torch.save(val_history, "resnet_101_accuracy_history.pt")
 
     return model_test
 
