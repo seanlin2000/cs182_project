@@ -67,7 +67,7 @@ class NickFury(object):
                     adversary = random.choice(self.adversaries)
                     with ctx_noparamgrad_and_eval(self.model):
                         adv_images = adversary.perturb(images, labels)
-                    adv_images = adv_images.to(device)
+                    adv_images = adv_images.to(self.device)
                     optimizer.zero_grad()
                     scores = self.model(images)
                     loss = criterion(scores, labels)
@@ -147,7 +147,7 @@ class NickFury(object):
             labels = labels.to(self.device)
             adversary = random.choice(self.adversaries)
             adv_images = adversary.perturb(images, labels)
-            adv_images = adv_images.to(device)
+            adv_images = adv_images.to(self.device)
             
             scores = self.model(adv_images)
             top_k_scores, top_k_indices = torch.topk(scores, k)
