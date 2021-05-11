@@ -42,7 +42,7 @@ class NickFury(object):
             num_hits = 0
 
             adv_loss = 0
-            adv__points = 0
+            adv_points = 0
             adv_hits = 0
             ##iterate through one epoch of training data
             for idx, (images, labels) in enumerate(trainLoader):
