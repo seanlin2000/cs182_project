@@ -160,7 +160,7 @@ class NickFury(object):
             adv_images = adversary.perturb(images, labels)
             adv_images = adv_images.to(self.device)
             
-            with torch.no_grad:
+            with torch.no_grad():
                 scores = self.model(adv_images)
             top_k_scores, top_k_indices = torch.topk(scores, k)
             hits = (labels == top_k_indices.T).any(axis=0)
