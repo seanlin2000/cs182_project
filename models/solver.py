@@ -5,8 +5,9 @@ class NickFury(object):
     """
     NickFury manages all our convengers
     """
-    def __init__(self, model, dataloaders, datasizes, device):
+    def __init__(self, model_name, model, dataloaders, datasizes, device):
         
+        self.model_name = model_name
         self.model = model
         self.device = device
         self.dataLoader = dict()
@@ -15,13 +16,14 @@ class NickFury(object):
         self.dataSize["train"] = datasizes["train"]
         self.dataLoader["val"] = dataloaders["val"]
         self.dataSize["val"] = datasizes["val"]
-
+        self.loss_history = []
     
-    def train(self, optimizer, criterion, lr_scheduler, num_epochs=25):
+    def train(self, optimizer, criterion, lr_scheduler=None, num_epochs=25):
         
         trainLoader = self.dataLoader["train"]
         
         loss_history = []
+        best_val_accuracy = -1
         for epoch in range(num_epochs):
             epoch_start_time = time.time()
             print("Epoch {0}:".format(epoch))
@@ -46,12 +48,12 @@ class NickFury(object):
                 num_points += len(labels)
                 num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
                 
-                print("\r",end='')
+                # print("\r",end='')
                 #print("Num points is ", num_points, " num hits is ", num_hits)
-                print("Training {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
+                print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
 
             per_point_loss = running_loss / self.dataSize["train"]
-                
+            loss_history.append(per_point_loss)
             epoch_end_time = time.time()
             hours, rem = divmod(epoch_end_time-epoch_start_time, 3600)
             minutes, seconds = divmod(rem, 60)
@@ -60,19 +62,36 @@ class NickFury(object):
             
             # print("Train Loss: {0:0.3f}".format(per_point_loss))
             # print("Train Accuracy: {0:.3f}".format(train_accuracy))
-            if epoch % 5 == 0:
-                with torch.no_grad():
-                    # per_point_loss = running_loss/self.dataSize["train"]
-                    # train_accuracy = self.accuracy("train")
-                    self.model.eval()  #put model in evaluation mode to calculate validation
-                    val_accuracy = self.accuracy("val")
-                    print("Validation Accuracy: {0:.3f}".format(val_accuracy))
-                                                
-        torch.save({
-            'overnight': model.state_dict(),
-        }, 'latest.pt')
-        
+            with torch.no_grad():
+                # per_point_loss = running_loss/self.dataSize["train"]
+                # train_accuracy = self.accuracy("train")
+                self.model.eval()  #put model in evaluation mode to calculate validation
+                val_accuracy = self.accuracy("val")
+                print("Validation Accuracy: {0:.3f}".format(val_accuracy))
+                print("Per Point Loss: {0:.3f}".format(per_point_loss))
+                if val_accuracy > best_val_accuracy:
+                    best_val_accuracy = val_accuracy
+                    torch.save({
+                        'overnight': self.model.state_dict(),
+                    }, self.model_name + '.pt')
+                    
+            if lr_scheduler:
+                lr_scheduler.step()
+                
+        self.loss_history.extend(loss_history)
         return loss_history
+    
+    def save_model(self, name, filename):
+        torch.save({
+            name: self.model.state_dict(),
+        }, filename)
+    
+    def save_loss_history(self, filename):
+        torch.save(self.loss_history_tensor,filename)
+        
+        
+    def get_total_loss_history(self):
+        return self.loss_history
     
     def accuracy(self, phase):
         return self.top_k_accuracy(1, phase)

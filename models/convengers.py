@@ -4,14 +4,15 @@ import torch.optim as optim
 import torchvision
 from collections import OrderedDict
 
+
 class SeaNormaBlock(nn.Module):
     def __init__(self, input_size, out_size, dropout=0.5):
-        super(SeaNormaBlock, self).__init__()
+        super().__init__()
         self.fc = nn.Linear(input_size, out_size)
         self.bn = nn.BatchNorm1d(out_size)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=dropout)
-        
+
     def forward(self, x):
         x = self.fc(x)
         x = self.bn(x)
@@ -19,15 +20,56 @@ class SeaNormaBlock(nn.Module):
         x = self.dropout(x)
         return x
 
-class SqueezeLayer(nn.Module):
+
+class CaptainAmerica(nn.Module):
+    vgg = []
+
+    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=-1,
+                 extract_features=False):
+        """
+        1. Creates a VGG transfer instance
+        """
+        super().__init__()
+
+        pretrained_vgg = torchvision.models.vgg19_bn(pretrained=True)
+
+        for p in pretrained_vgg.parameters():
+            p.requires_grad = False
+
+        feature_layers = list(pretrained_vgg.features.children())
+        pool_layer = [pretrained_vgg.avgpool]
+        flatten_layer = [nn.Flatten()]
+        classifier_layers = list(pretrained_vgg.classifier.children())
+        modules = feature_layers + pool_layer + flatten_layer + classifier_layers
+
+        modules = modules[:layer_cutoff]
+
+        self.model = nn.Sequential(*modules)
+
+        in_dim = 4096
+        self.out_dim = in_dim
+
+        if not extract_features:
+            for i in range(num_blocks):
+                self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
+                in_dim = hidden_size
+
+            self.model.add_module("Logits", nn.Linear(in_dim, num_classes))
+            self.out_dim = num_classes
+
     def forward(self, x):
-        x = torch.squeeze(x)
+        x = self.model.forward(x)
         return x
-    
+
+    def get_out_dim(self):
+        return self.out_dim
+
+
 class Thor(nn.Module):
-    resnet_layer_dims = [64,64,64,64,256,512,1024,2048,2048,1000]
-    
-    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=8,extract_features=False):
+    resnet_layer_dims = [64, 64, 64, 64, 256, 512, 1024, 2048, 2048, 1000]
+
+    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=8,
+                 extract_features=False):
         '''
         1. Creates Resnet101 instance cutoff at layer_cutoff (exclusive)
         2. Adds a (1,1) average pool layer at end (like in original ResNet, probably other ways we can do this)
@@ -53,45 +95,47 @@ class Thor(nn.Module):
         Layer 10: (2048 in, 1000 out) FC layer
         '''
         super().__init__()
-        
+
         pretrained_resnet = torchvision.models.resnet101(pretrained=True)
-        
+
         for p in pretrained_resnet.parameters():
             p.requires_grad = requires_grad
-            
+
         modules = list(pretrained_resnet.children())[0:layer_cutoff]
-        
+
         self.model = nn.Sequential(*modules)
-        self.model.add_module("Average Pool", nn.AdaptiveAvgPool2d((1,1)))
-        self.model.add_module("Squeeze", SqueezeLayer())
-        #map output layer to output feature size
-        #i.e. layer 5 cutoff corresponds to 256 feature size
-        in_dim = Thor.resnet_layer_dims[layer_cutoff-1]
+        self.model.add_module("Average Pool", nn.AdaptiveAvgPool2d((1, 1)))
+        self.model.add_module("Flatten", nn.Flatten())
+        # map output layer to output feature size
+        # i.e. layer 5 cutoff corresponds to 256 feature size
+        in_dim = Thor.resnet_layer_dims[layer_cutoff - 1]
         self.out_dim = in_dim
-        
-        if extract_features == False:
+
+        if not extract_features:
             for i in range(num_blocks):
                 self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
                 in_dim = hidden_size
-            
+
             self.model.add_module("Logits", nn.Linear(in_dim, num_classes))
             self.out_dim = num_classes
-    
+
     def forward(self, x):
         x = self.model.forward(x)
         return x
-    
+
     def get_out_dim(self):
         return self.out_dim
-    
-    
+
+
 class IronMan(nn.Module):
-    
-    inception_layer_dims = [32, 32, 64, 64, 80,192, 192, 256, 288, 288, 768, 768, 768, 768, 768, None, 1280, 2048, 2048, 2048, 2048, 1000]
-    
-    inception_layer_dims_no_aux = [32, 32, 64, 64, 80,192, 192, 256, 288, 288, 768, 768, 768, 768, 768, 1280, 2048, 2048, 2048, 2048, 1000]
-    
-    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=20, use_aux=False, extract_features=False):
+    inception_layer_dims = [32, 32, 64, 64, 80, 192, 192, 256, 288, 288, 768, 768, 768, 768, 768, None, 1280, 2048,
+                            2048, 2048, 2048, 1000]
+
+    inception_layer_dims_no_aux = [32, 32, 64, 64, 80, 192, 192, 256, 288, 288, 768, 768, 768, 768, 768, 1280, 2048,
+                                   2048, 2048, 2048, 1000]
+
+    def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=20,
+                 use_aux=False, extract_features=False):
         '''
         1. Creates InceptionV3 instance cutoff at layer_cutoff
         2. Adds a (1,1) average pool layer at end (like in original ResNet, probably other ways we can do this)
@@ -118,67 +162,94 @@ class IronMan(nn.Module):
         layer    21: Dropout layer
         layer    22: Fully connected layer (in_dim=2048, out_dim=1000)
         '''
-        
+
         super().__init__()
-        
+
         pretrained_inception = torchvision.models.inception_v3(pretrained=True, aux_logits=use_aux)
-        
+
         for p in pretrained_inception.parameters():
             p.requires_grad = requires_grad
-            
+
         modules = list(pretrained_inception.children())[0:layer_cutoff]
-        
+
         self.model = nn.Sequential(*modules)
-        self.model.add_module("Average Pool", nn.AdaptiveAvgPool2d((1,1)))
-        self.model.add_module("Squeeze", SqueezeLayer())
-        #map output layer to output feature size
-        #i.e. layer 5 cutoff corresponds to 256 feature size
-        
+        self.model.add_module("Average Pool", nn.AdaptiveAvgPool2d((1, 1)))
+        self.model.add_module("Flatten", nn.Flatten())
+        # map output layer to output feature size
+        # i.e. layer 5 cutoff corresponds to 256 feature size
+
         if use_aux:
-            in_dim = IronMan.inception_layer_dims[layer_cutoff-1]
+            in_dim = IronMan.inception_layer_dims[layer_cutoff - 1]
         else:
-            in_dim = IronMan.inception_layer_dims_no_aux[layer_cutoff-1]
-        
+            in_dim = IronMan.inception_layer_dims_no_aux[layer_cutoff - 1]
+
         self.out_dim = in_dim
-        
-        if extract_features == False:
+
+        if not extract_features:
             for i in range(num_blocks):
                 self.model.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
                 in_dim = hidden_size
 
             self.model.add_module("Logits", nn.Linear(in_dim, num_classes))
             self.out_dim = num_classes
-        
+
     def forward(self, x):
         x = self.model.forward(x)
         return x
-    
+
     def get_out_dim(self):
         return self.out_dim
 
-class Convengers_Cat(nn.Module):
-    ## concatenate then FCC
-    
-    def __init__(self, num_classes=200, num_blocks=1, hidden_size = 2048, requires_grad=False):
+
+class ConvengersCat(nn.Module):
+    # concatenate then FCC
+
+    def __init__(self, num_classes=200, requires_grad=False):
         super().__init__()
-        
+
         self.thor = Thor(extract_features=True, requires_grad=requires_grad)
         self.ironman = IronMan(extract_features=True, requires_grad=requires_grad)
+        self.captainamerica = CaptainAmerica(extract_features=True, requires_grad=requires_grad, layer_cutoff=-2)
         self.teamup = nn.Sequential()
+
+        in_dim = self.thor.get_out_dim() + self.ironman.get_out_dim() + self.captainamerica.get_out_dim()
         
-        in_dim = self.thor.get_out_dim() + self.ironman.get_out_dim()
-        
-        for i in range(num_blocks):
-            self.teamup.add_module("Block" + str(i), SeaNormaBlock(in_dim, hidden_size))
-            in_dim = hidden_size
-            
-        self.teamup.add_module("FC", nn.Linear(in_dim, num_classes))
-        
+        self.teamup.add_module("Block1", SeaNormaBlock(in_dim, 4096))
+        self.teamup.add_module("Block2", SeaNormaBlock(4096, 2048))
+        self.teamup.add_module("Block3", SeaNormaBlock(2048, 1024))
+        self.teamup.add_module("FC", nn.Linear(1024, num_classes))
+
     def forward(self, x):
         thor_out = self.thor.forward(x)
         ironman_out = self.ironman.forward(x)
-        concat_out = torch.cat((thor_out, ironman_out),dim=1)
+        captainamerica_out = self.captainamerica.forward(x)
+        concat_out = torch.cat((thor_out, ironman_out, captainamerica_out), dim=1)
         out = self.teamup.forward(concat_out)
         return out
     
+    def thor_grad(self, requires_grad):
+        for p in self.thor.parameters():
+            p.requires_grad = requires_grad
     
+    def ironman_grad(self, requires_grad):
+        for p in self.ironman.parameters():
+            p.requires_grad = requires_grad
+            
+    def captainamerica_grad(self, requires_grad):
+        for p in self.ironman.parameters():
+            p.requires_grad = requires_grad
+            
+    def teamup_grad(self, requires_grad):
+        for p in self.teamup.parameters():
+            p.requires_grad = requires_grad
+        
+    def end_to_end_grad(self, requires_grad):
+        # sets all parameters to require grad
+        
+        self.thor_grad(requires_grad)
+        self.ironman_grad(requires_grad)
+        self.captainamerica_grad(requires_grad)
+        self.teamup_grad(requires_grad)
+               
+   
+        
