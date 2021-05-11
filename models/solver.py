@@ -60,7 +60,7 @@ class NickFury(object):
                 
                 # Train on an adversarial minibatch
                 if adv_train:
-                    use_pgd = torch.rand(1) < 0.1
+                    use_pgd = torch.rand(1) < 0.25
                     if use_pgd:
                         adversary = random.choice(self.pgd_adversaries)
                     else:
@@ -151,7 +151,7 @@ class NickFury(object):
             images = images.to(self.device)
             labels = labels.to(self.device)
             
-            use_pgd = torch.rand(1) < 0.1
+            use_pgd = torch.rand(1) < 0.25
             if use_pgd:
                 adversary = random.choice(self.pgd_adversaries)
             else:
