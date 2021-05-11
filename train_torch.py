@@ -46,7 +46,7 @@ def main():
         'val': transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
-            transforms.RandomApply(transforms.GaussianBlur(kernel_size=5)),
+            transforms.RandomApply([transforms.GaussianBlur(kernel_size=5)], p=0.25),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
@@ -76,7 +76,7 @@ def main():
     model_solver = NickFury("resnet_101", model_test, dataloaders, dataset_sizes, device)
     
     model_criterion = nn.CrossEntropyLoss()
-    model_optimizer = optim.Adam(model_test.parameters(), lr=0.00001)
+    model_optimizer = optim.Adam(model_test.parameters(), lr=0.0001)
     # model_optimizer = optim.SGD(model_test.parameters(), lr=0.0001, momentum=0.9)
     model_exp_lr_scheduler = lr_scheduler.StepLR(model_optimizer, step_size=7, gamma=0.1)
 
