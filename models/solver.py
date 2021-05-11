@@ -68,10 +68,10 @@ class NickFury(object):
                     loss.backward()
                     optimizer.step()
 
-                    num_loss += loss.item()
+                    running_loss += loss.item()
                     num_points += len(labels)
                     num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
-                print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/(2*len(trainLoader)), num_loss/num_points, 100*num_hits/num_points), end='')
+                print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
 
             per_point_loss = running_loss / self.dataSize["train"]
             loss_history.append(per_point_loss)
