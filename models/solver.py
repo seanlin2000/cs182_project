@@ -40,10 +40,6 @@ class NickFury(object):
             running_loss = 0
             num_points = 0
             num_hits = 0
-
-            adv_loss = 0
-            adv_points = 0
-            adv_hits = 0
             ##iterate through one epoch of training data
             for idx, (images, labels) in enumerate(trainLoader):
                 
@@ -60,8 +56,6 @@ class NickFury(object):
                 num_points += len(labels)
                 num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
                 
-                print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
-
                 # Train on an adversarial minibatch
                 if adv_train:
                     adversary = random.choice(self.adversaries)
@@ -69,16 +63,15 @@ class NickFury(object):
                         adv_images = adversary.perturb(images, labels)
                     adv_images = adv_images.to(self.device)
                     optimizer.zero_grad()
-                    scores = self.model(images)
+                    scores = self.model(adv_images)
                     loss = criterion(scores, labels)
                     loss.backward()
                     optimizer.step()
 
-                    adv_loss += loss.item()
-                    adv_points += len(labels)
-                    adv_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
-                    print()
-                    print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), adv_loss/adv_points, 100*adv_hits/adv_points), end='')
+                    num_loss += loss.item()
+                    num_points += len(labels)
+                    num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
+                print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/(2*len(trainLoader)), num_loss/num_points, 100*num_hits/num_points), end='')
 
             per_point_loss = running_loss / self.dataSize["train"]
             loss_history.append(per_point_loss)
