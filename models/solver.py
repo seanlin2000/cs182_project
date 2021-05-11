@@ -45,48 +45,48 @@ class NickFury(object):
             ##iterate through one epoch of training data
             for idx, (images, labels) in enumerate(trainLoader):
                 
-                images = images.to(self.device)
-                labels = labels.to(self.device)
+            #     images = images.to(self.device)
+            #     labels = labels.to(self.device)
                 
-                optimizer.zero_grad()
-                scores = self.model(images)
-                loss = criterion(scores, labels)
-                loss.backward()
-                optimizer.step()
+            #     optimizer.zero_grad()
+            #     scores = self.model(images)
+            #     loss = criterion(scores, labels)
+            #     loss.backward()
+            #     optimizer.step()
                 
-                running_loss += loss.item()
-                num_points += len(labels)
-                num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
+            #     running_loss += loss.item()
+            #     num_points += len(labels)
+            #     num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
                 
-                # Train on an adversarial minibatch
-                if adv_train:
-                    use_pgd = torch.rand(1) < 0.25
-                    if use_pgd:
-                        adversary = random.choice(self.pgd_adversaries)
-                    else:
-                        adversary = random.choice(self.fgsm_adversaries)
+            #     # Train on an adversarial minibatch
+            #     if adv_train:
+            #         use_pgd = torch.rand(1) < 0.25
+            #         if use_pgd:
+            #             adversary = random.choice(self.pgd_adversaries)
+            #         else:
+            #             adversary = random.choice(self.fgsm_adversaries)
                         
-                    with ctx_noparamgrad_and_eval(self.model):
-                        adv_images = adversary.perturb(images, labels)
-                    adv_images = adv_images.to(self.device)
-                    optimizer.zero_grad()
-                    scores = self.model(adv_images)
-                    loss = criterion(scores, labels)
-                    loss.backward()
-                    optimizer.step()
+            #         with ctx_noparamgrad_and_eval(self.model):
+            #             adv_images = adversary.perturb(images, labels)
+            #         adv_images = adv_images.to(self.device)
+            #         optimizer.zero_grad()
+            #         scores = self.model(adv_images)
+            #         loss = criterion(scores, labels)
+            #         loss.backward()
+            #         optimizer.step()
 
-                    running_loss += loss.item()
-                    num_points += len(labels)
-                    num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
-                print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
+            #         running_loss += loss.item()
+            #         num_points += len(labels)
+            #         num_hits += torch.sum(labels == torch.argmax(scores, dim=1)).item()
+            #     print("\rTraining {0:0.2f}%, loss: {1:0.3f}, Accuracy: {2:0.2f}%".format(100*idx/len(trainLoader), running_loss/num_points, 100*num_hits/num_points), end='')
 
-            per_point_loss = running_loss / self.dataSize["train"]
-            loss_history.append(per_point_loss)
-            epoch_end_time = time.time()
-            hours, rem = divmod(epoch_end_time-epoch_start_time, 3600)
-            minutes, seconds = divmod(rem, 60)
-            print()
-            print("Epoch {} completed with elapsed time {:0>2}:{:0>2}:{:05.2f}".format(epoch, int(hours),int(minutes),seconds))
+            # per_point_loss = running_loss / self.dataSize["train"]
+            # loss_history.append(per_point_loss)
+            # epoch_end_time = time.time()
+            # hours, rem = divmod(epoch_end_time-epoch_start_time, 3600)
+            # minutes, seconds = divmod(rem, 60)
+            # print()
+            # print("Epoch {} completed with elapsed time {:0>2}:{:0>2}:{:05.2f}".format(epoch, int(hours),int(minutes),seconds))
             
             with torch.no_grad():
                 self.model.eval()  #put model in evaluation mode to calculate validation
@@ -95,14 +95,14 @@ class NickFury(object):
                 self.accuracy_history.append(val_accuracy)
                 
                 print("Validation Accuracy: {0:.3f}".format(val_accuracy))
-                if adv_train:
-                    print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
                 # print("Per Point Loss: {0:.3f}".format(per_point_loss))
                 if val_accuracy > best_val_accuracy:
                     best_val_accuracy = val_accuracy
                     torch.save({
                         'overnight': self.model.state_dict(),
                     }, self.model_name + '.pt')
+                if adv_train:
+                    print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
                     
             if lr_scheduler:
                 lr_scheduler.step()
@@ -156,8 +156,9 @@ class NickFury(object):
                 adversary = random.choice(self.pgd_adversaries)
             else:
                 adversary = random.choice(self.fgsm_adversaries)
-                
-            adv_images = adversary.perturb(images, labels)
+
+            with ctx_noparamgrad_and_eval(self.model):
+                adv_images = adversary.perturb(images, labels)
             adv_images = adv_images.to(self.device)
             
             scores = self.model(adv_images)
