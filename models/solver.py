@@ -95,14 +95,17 @@ class NickFury(object):
                 self.accuracy_history.append(val_accuracy)
                 
                 print("Validation Accuracy: {0:.3f}".format(val_accuracy))
-                if adv_train:
-                    print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
+           
                 # print("Per Point Loss: {0:.3f}".format(per_point_loss))
                 if val_accuracy > best_val_accuracy:
                     best_val_accuracy = val_accuracy
                     torch.save({
                         'overnight': self.model.state_dict(),
                     }, self.model_name + '.pt')
+                    
+            if adv_train:
+                if epoch % 3 == 0:
+                    print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
                     
             if lr_scheduler:
                 lr_scheduler.step()
@@ -116,7 +119,10 @@ class NickFury(object):
         }, filename)
     
     def save_loss_history(self, filename):
-        torch.save(self.loss_history_tensor,filename)
+        torch.save(self.loss_history,filename)
+        
+    def save_accuracy_history(self, filename):
+        torch.save(self.accuracy_history,filename)
         
     def get_total_loss_history(self):
         return self.loss_history
@@ -160,7 +166,9 @@ class NickFury(object):
             adv_images = adversary.perturb(images, labels)
             adv_images = adv_images.to(self.device)
             
-            scores = self.model(adv_images)
+            with torch.no_grad():
+                scores = self.model(adv_images)
+                
             top_k_scores, top_k_indices = torch.topk(scores, k)
             hits = (labels == top_k_indices.T).any(axis=0)
             total_hits += torch.sum(hits)
