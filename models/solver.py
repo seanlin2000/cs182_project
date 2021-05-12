@@ -60,7 +60,7 @@ class NickFury(object):
                 
                 # Train on an adversarial minibatch
                 if adv_train:
-                    use_pgd = torch.rand(1) < 0.1
+                    use_pgd = torch.rand(1) < 0.25
                     if use_pgd:
                         adversary = random.choice(self.pgd_adversaries)
                     else:
@@ -95,7 +95,6 @@ class NickFury(object):
                 self.accuracy_history.append(val_accuracy)
                 
                 print("Validation Accuracy: {0:.3f}".format(val_accuracy))
-           
                 # print("Per Point Loss: {0:.3f}".format(per_point_loss))
                 if val_accuracy > best_val_accuracy:
                     best_val_accuracy = val_accuracy
@@ -103,9 +102,8 @@ class NickFury(object):
                         'overnight': self.model.state_dict(),
                     }, self.model_name + '.pt')
                     
-            if adv_train:
-                if epoch % 3 == 0:
-                    print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
+            if adv_train and epoch % 3 == 0:
+                print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
                     
             if lr_scheduler:
                 lr_scheduler.step()
@@ -157,12 +155,12 @@ class NickFury(object):
             images = images.to(self.device)
             labels = labels.to(self.device)
             
-            use_pgd = torch.rand(1) < 0.1
+            use_pgd = torch.rand(1) < 0.25
             if use_pgd:
                 adversary = random.choice(self.pgd_adversaries)
             else:
                 adversary = random.choice(self.fgsm_adversaries)
-                
+
             adv_images = adversary.perturb(images, labels)
             adv_images = adv_images.to(self.device)
             
