@@ -60,7 +60,7 @@ class NickFury(object):
                 
                 # Train on an adversarial minibatch
                 if adv_train:
-                    use_pgd = torch.rand(1) < 0.25
+                    use_pgd = torch.rand(1) < 0.05
                     if use_pgd:
                         adversary = random.choice(self.pgd_adversaries)
                     else:
@@ -101,6 +101,7 @@ class NickFury(object):
                     torch.save({
                         'overnight': self.model.state_dict(),
                     }, self.model_name + '.pt')
+                    
             if adv_train and epoch % 3 == 0:
                 print("Adversarial validation accuracy: {0:.3f}".format(self.adversarial_accuracy("val")))
                     
@@ -116,7 +117,10 @@ class NickFury(object):
         }, filename)
     
     def save_loss_history(self, filename):
-        torch.save(self.loss_history_tensor,filename)
+        torch.save(self.loss_history,filename)
+        
+    def save_accuracy_history(self, filename):
+        torch.save(self.accuracy_history,filename)
         
     def get_total_loss_history(self):
         return self.loss_history
@@ -151,7 +155,7 @@ class NickFury(object):
             images = images.to(self.device)
             labels = labels.to(self.device)
             
-            use_pgd = torch.rand(1) < 0.25
+            use_pgd = torch.rand(1) < 0.05
             if use_pgd:
                 adversary = random.choice(self.pgd_adversaries)
             else:
@@ -162,6 +166,7 @@ class NickFury(object):
             
             with torch.no_grad():
                 scores = self.model(adv_images)
+                
             top_k_scores, top_k_indices = torch.topk(scores, k)
             hits = (labels == top_k_indices.T).any(axis=0)
             total_hits += torch.sum(hits)
