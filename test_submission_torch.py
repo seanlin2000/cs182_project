@@ -18,6 +18,7 @@ def main():
     
     model = Thor(pre_trained=False)   ## Fill this out
     model.load_state_dict(ckpt['net']) ## Fill this out
+    model.to(device)
     model.eval()
 
     data_transforms = transforms.Compose([
