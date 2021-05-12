@@ -35,19 +35,20 @@ def main():
     # Load the data
     image_datasets = {x: datasets.ImageFolder(data_dir / x, data_transforms[x]) for x in ['train', 'val']}
     # Set num_workers=2 when we use CPU, 4 when we use GPU, batch size needs to be smaller for weaker CPUs
-    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=50, shuffle=True, num_workers=2,pin_memory=True) for x in ['train', 'val']}
+    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=10, shuffle=True, num_workers=2,pin_memory=False) for x in ['train', 'val']}
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
     class_names = image_datasets['train'].classes
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
+    print(device)
+
     concat_conv = ConvengersCat(requires_grad=False)
     concat_conv = concat_conv.to(device)
     
-    state_dict = torch.load("three_phase_finished.pt")["net"]
+    state = torch.load("three_phase_finished.pt", map_location=device)["net"]
     concat_conv.load_state_dict(state)
     
-    concat_solver = NickFury("concat_conv", concat_conv, dataloaders, dataset_sizes, device)
+    concat_solver = NickFury("concat_conv_no_adv", concat_conv, dataloaders, dataset_sizes, device)
     concat_criterion = nn.CrossEntropyLoss()
     
     fc_optimizer = optim.Adam(concat_conv.parameters(), lr=0.0001) # fc optimizer
@@ -69,7 +70,7 @@ def main():
     '''
     print("Training SeaNorman Layers")
     concat_solver.train(fc_optimizer, concat_criterion, num_epochs=5)
-
+    
     for i in range(1):
         # Second: train FC + Thor
         print("Training SeaNorman + Thor")
@@ -94,9 +95,9 @@ def main():
     # Fifth: End to End optimizer
     print("Training end to end")
     concat_conv.end_to_end_grad(True)
-    concat_solver.train(concat_optimizer, concat_criterion, concat_lr_scheduler, num_epochs=15, adv_train=True)
+    concat_solver.train(concat_optimizer, concat_criterion, concat_lr_scheduler, num_epochs=25, adv_train=False)
     
-    concat_solver.save_model("five-phase-train-final", "concat.pt")
+    concat_solver.save_model("five-phase-train-final", "concat_no_adv.pt")
     #concat_solver.save_loss_history("concat_loss_history.pt")
     return model_test
 
