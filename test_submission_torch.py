@@ -24,7 +24,9 @@ def main():
     ])
 
     # Loop through the CSV file and make a prediction for each line
-    with open('eval_classified.csv', 'w') as eval_output_file:  # Open the evaluation CSV file for writing
+    
+    # eval_classified.csv
+    with open('eval.csv', 'w') as eval_output_file:  # Open the evaluation CSV file for writing
         for line in pathlib.Path(sys.argv[1]).open():  # Open the input CSV file for reading
             image_id, image_path, image_height, image_width, image_channels = line.strip().split(
                 ',')  # Extract CSV info
