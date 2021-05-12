@@ -25,13 +25,13 @@ class CaptainAmerica(nn.Module):
     vgg = []
 
     def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=-1,
-                 extract_features=False):
+                 extract_features=False, pre_trained=True):
         """
         1. Creates a VGG transfer instance
         """
         super().__init__()
 
-        pretrained_vgg = torchvision.models.vgg19_bn(pretrained=True)
+        pretrained_vgg = torchvision.models.vgg19_bn(pretrained=pre_trained)
 
         for p in pretrained_vgg.parameters():
             p.requires_grad = False
@@ -69,7 +69,7 @@ class Thor(nn.Module):
     resnet_layer_dims = [64, 64, 64, 64, 256, 512, 1024, 2048, 2048, 1000]
 
     def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=8,
-                 extract_features=False):
+                 extract_features=False, pre_trained=True):
         '''
         1. Creates Resnet101 instance cutoff at layer_cutoff (exclusive)
         2. Adds a (1,1) average pool layer at end (like in original ResNet, probably other ways we can do this)
@@ -96,7 +96,7 @@ class Thor(nn.Module):
         '''
         super().__init__()
 
-        pretrained_resnet = torchvision.models.resnet101(pretrained=True)
+        pretrained_resnet = torchvision.models.resnet101(pretrained=pre_trained)
 
         for p in pretrained_resnet.parameters():
             p.requires_grad = requires_grad
@@ -135,7 +135,7 @@ class IronMan(nn.Module):
                                    2048, 2048, 2048, 1000]
 
     def __init__(self, num_classes=200, hidden_size=2048, num_blocks=1, requires_grad=False, layer_cutoff=20,
-                 use_aux=False, extract_features=False):
+                 use_aux=False, extract_features=False, pre_trained=True):
         '''
         1. Creates InceptionV3 instance cutoff at layer_cutoff
         2. Adds a (1,1) average pool layer at end (like in original ResNet, probably other ways we can do this)
@@ -165,7 +165,7 @@ class IronMan(nn.Module):
 
         super().__init__()
 
-        pretrained_inception = torchvision.models.inception_v3(pretrained=True, aux_logits=use_aux)
+        pretrained_inception = torchvision.models.inception_v3(pretrained=pre_trained, aux_logits=use_aux)
 
         for p in pretrained_inception.parameters():
             p.requires_grad = requires_grad
@@ -204,16 +204,16 @@ class IronMan(nn.Module):
 class ConvengersCat(nn.Module):
     # concatenate then FCC
 
-    def __init__(self, num_classes=200, requires_grad=False):
+    def __init__(self, num_classes=200, requires_grad=False, pre_trained=True):
         super().__init__()
 
-        self.thor = Thor(extract_features=True, requires_grad=requires_grad)
-        self.ironman = IronMan(extract_features=True, requires_grad=requires_grad)
-        self.captainamerica = CaptainAmerica(extract_features=True, requires_grad=requires_grad, layer_cutoff=-2)
-        self.teamup = nn.Sequential()
-
+        self.thor = Thor(extract_features=True, requires_grad=requires_grad, pre_trained=pre_trained)
+        self.ironman = IronMan(extract_features=True, requires_grad=requires_grad, pre_trained=pre_trained)
+        self.captainamerica = CaptainAmerica(extract_features=True, requires_grad=requires_grad, layer_cutoff=-2, pre_trained=pre_trained)
+        
         in_dim = self.thor.get_out_dim() + self.ironman.get_out_dim() + self.captainamerica.get_out_dim()
         
+        self.teamup = nn.Sequential()
         self.teamup.add_module("Block1", SeaNormaBlock(in_dim, 4096))
         self.teamup.add_module("Block2", SeaNormaBlock(4096, 2048))
         self.teamup.add_module("Block3", SeaNormaBlock(2048, 1024))
