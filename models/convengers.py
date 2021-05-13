@@ -208,17 +208,17 @@ class Ensemble(nn.Module):
         resnet_names = ['resnet-norman.pt', 'resnet-sean1.pt', 'resnet-sean2.pt']
         inception_names = ['inception-norman.pt', 'inception-sean1.pt', 'inception-sean2.pt']
         for name in resnet_names:
-          ckpt = torch.load(name)
+          ckpt = torch.load(name, map_location=device)
           model = Thor(num_blocks=1, requires_grad=True)
-          model.load_state_dict(ckpt['overnight'], map_location=device)
+          model.load_state_dict(ckpt['overnight'])
           model = model.to(device)
           model.eval()
           self.models.append(model)
 
         for name in inception_names:
-          ckpt = torch.load(name)
+          ckpt = torch.load(name, map_location=device)
           model = IronMan(num_blocks=1, requires_grad=True)
-          model.load_state_dict(ckpt['overnight'], map_location=device)
+          model.load_state_dict(ckpt['overnight'])
           model = model.to(device)
           model.eval()
           self.models.append(model)
