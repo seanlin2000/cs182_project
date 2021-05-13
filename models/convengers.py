@@ -202,7 +202,7 @@ class IronMan(nn.Module):
         return self.out_dim
 
 class Ensemble(nn.Module):
-    def __init__(self, num):
+    def __init__(self):
         super().__init__()
         self.models = []
         print("Penis")
