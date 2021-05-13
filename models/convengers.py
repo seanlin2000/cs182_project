@@ -202,7 +202,7 @@ class IronMan(nn.Module):
         return self.out_dim
 
 class Ensemble(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super().__init__()
         self.models = []
         print("Penis")
@@ -211,7 +211,7 @@ class Ensemble(nn.Module):
         for name in resnet_names:
           ckpt = torch.load(name)
           model = Thor(num_blocks=1, requires_grad=True)
-          model.load_state_dict(ckpt['overnight'])
+          model.load_state_dict(ckpt['overnight'], map_location=device)
           model = model.to(device)
           model.eval()
           self.models.append(model)
@@ -219,7 +219,7 @@ class Ensemble(nn.Module):
         for name in inception_names:
           ckpt = torch.load(name)
           model = IronMan(num_blocks=1, requires_grad=True)
-          model.load_state_dict(ckpt['overnight'])
+          model.load_state_dict(ckpt['overnight'], map_location=device)
           model = model.to(device)
           model.eval()
           self.models.append(model)
