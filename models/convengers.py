@@ -202,13 +202,33 @@ class IronMan(nn.Module):
         return self.out_dim
 
 class Ensemble(nn.Module):
-    # Ensemble model solely used for inference
-    def __init__(self, models):
-        self.models = models
-    
+    def __init__(self, num):
+        super().__init__()
+        self.models = []
+        print("Penis")
+        resnet_names = ['resnet-norman.pt', 'resnet-sean1.pt', 'resnet-sean2.pt']
+        inception_names = ['inception-norman.pt', 'inception-sean1.pt', 'inception-sean2.pt']
+        for name in resnet_names:
+          ckpt = torch.load(name)
+          model = Thor(num_blocks=1, requires_grad=True)
+          model.load_state_dict(ckpt['overnight'])
+          model = model.to(device)
+          model.eval()
+          self.models.append(model)
+
+        for name in inception_names:
+          ckpt = torch.load(name)
+          model = IronMan(num_blocks=1, requires_grad=True)
+          model.load_state_dict(ckpt['overnight'])
+          model = model.to(device)
+          model.eval()
+          self.models.append(model)
+
     def forward(self, x):
         outputs = [F.softmax(model(x), dim=1) for model in self.models]
-        prob = sum(outputs) / len(outputs)
+        print(outputs)
+        outputs = torch.tensor(outputs)
+        prob = torch.sum(outputs, dim=1) / len(outputs)
 
         return prob
 
