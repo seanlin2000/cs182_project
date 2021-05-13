@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
+import torch.functional as F
 from collections import OrderedDict
 
 
@@ -199,6 +200,17 @@ class IronMan(nn.Module):
 
     def get_out_dim(self):
         return self.out_dim
+
+class Ensemble(nn.Module):
+    # Ensemble model solely used for inference
+    def __init__(self, models):
+        self.models = models
+    
+    def forward(self, x):
+        outputs = [F.softmax(model(x), dim=1) for model in self.models]
+        prob = sum(outputs) / len(outputs)
+
+        return prob
 
 
 class ConvengersCat(nn.Module):
