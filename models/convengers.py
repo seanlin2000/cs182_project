@@ -227,9 +227,7 @@ class Ensemble(nn.Module):
         outputs = nn.functional.softmax(self.models[0](x), dim=1)
         for model in self.models[1:]:
             logits = nn.functional.softmax(model(x),dim=1)
-            print(logits)
             outputs += logits
-        print("outputs:", outputs)
         return outputs
 
 
