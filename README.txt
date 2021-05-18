@@ -1,11 +1,13 @@
-This is some sample code for the CS 182/282 Computer Vision project (Tensorflow 2). It has the following files:
+External Files needed:
+convenger-final.pt
+ensemble.pt (optional)
 
-README.txt - This file
-requirements.txt - The python requirments necessary to run this project
-train_sample.py - A sample training file which trains a simple model on the data, and save the checkpoint to be loaded
-                  in the test_submission.py file.
-test_submission.py - A sample file which will return an output for every input in the eval.csv
-eval.csv - An example test file
-data/get_data.sh - A script which will download the tiny-imagenet data into the data/tiny-imagenet-200 file
+Downloading Packages and Checkpoints:
+1. run 'pip install -r requirements.txt' inside current virtual environment
 
-Note: You should be using Python 3 to run this code.
+Steps to run test_submission_torch.py:
+1. move convenger-final.pt from the Google Drive into working directory
+2. cd into /data folder and run './get_data.sh'
+3. cd ..
+4. run: python3 test_submission_torch.py /path/to/test_data.csv
+5. Model predictions will be eval_classified.csv
