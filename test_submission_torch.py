@@ -13,7 +13,7 @@ def main():
     CLASSES = sorted([item.name for item in data_dir.glob('*')])
     im_height, im_width = 64, 64
     
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     ckpt = torch.load('convenger-final.pt', map_location=device) #change file name
     
     model = ConvengersCat(pre_trained=True)   ## Fill this out
