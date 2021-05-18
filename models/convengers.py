@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
-import torch.functional as F
+import torch.nn.functional as F
 from collections import OrderedDict
 
 
@@ -202,14 +202,13 @@ class IronMan(nn.Module):
         return self.out_dim
 
 class Ensemble(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super().__init__()
         self.models = []
-        print("Penis")
         resnet_names = ['resnet-norman.pt', 'resnet-sean1.pt', 'resnet-sean2.pt']
         inception_names = ['inception-norman.pt', 'inception-sean1.pt', 'inception-sean2.pt']
         for name in resnet_names:
-          ckpt = torch.load(name)
+          ckpt = torch.load(name, map_location=device)
           model = Thor(num_blocks=1, requires_grad=True)
           model.load_state_dict(ckpt['overnight'])
           model = model.to(device)
@@ -217,7 +216,7 @@ class Ensemble(nn.Module):
           self.models.append(model)
 
         for name in inception_names:
-          ckpt = torch.load(name)
+          ckpt = torch.load(name, map_location=device)
           model = IronMan(num_blocks=1, requires_grad=True)
           model.load_state_dict(ckpt['overnight'])
           model = model.to(device)
@@ -225,12 +224,11 @@ class Ensemble(nn.Module):
           self.models.append(model)
 
     def forward(self, x):
-        outputs = [F.softmax(model(x), dim=1) for model in self.models]
-        print(outputs)
-        outputs = torch.tensor(outputs)
-        prob = torch.sum(outputs, dim=1) / len(outputs)
-
-        return prob
+        outputs = nn.functional.softmax(self.models[0](x), dim=1)
+        for model in self.models[1:]:
+            logits = nn.functional.softmax(model(x),dim=1)
+            outputs += logits
+        return outputs
 
 
 class ConvengersCat(nn.Module):
